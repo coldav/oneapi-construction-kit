@@ -1,0 +1,47 @@
+# Copyright (C) Codeplay Software Limited
+#
+# Licensed under the Apache License, Version 2.0 (the "License") with LLVM
+# Exceptions; you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://github.com/codeplaysoftware/oneapi-construction-kit/blob/main/LICENSE.txt
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+"""Python configuration file for lit."""
+
+import os
+
+config.test_exec_root = r"@CURRENT_BINARY_DIR@"
+
+# Paths to helper utilities
+config.tool_paths = {
+    'veczc': '@veczc_EXECUTABLE@',
+}
+
+# Defer to the common lit configuration to set up the bulk of the config.
+common_lit_cfg_path = os.path.join('@PROJECT_BINARY_DIR@', 'modules',
+                                   'lit', 'lit.common.cfg')
+
+lit_config.load_config(config, common_lit_cfg_path)
+
+if '@CMAKE_SYSTEM_PROCESSOR@' == 'ARM64':
+    config.available_features.add('aarch64')
+elif '@CMAKE_SYSTEM_PROCESSOR@' == 'ARM':
+    config.available_features.add('arm')
+
+# Some lit tests may fail when cross-compiled, so add the native feature if not
+# cross-compiling.
+if '@CMAKE_CROSSCOMPILING@'.upper() in ['0', 'OFF', 'NO', 'FALSE', 'N']:
+    config.available_features.add('native')
+
+import lit.llvm
+lit.llvm.initialize(lit_config, config)
+
+# Let the main config do the real work.
+lit_config.load_config(config, os.path.join('@CMAKE_CURRENT_SOURCE_DIR@', "lit.cfg.py"))
