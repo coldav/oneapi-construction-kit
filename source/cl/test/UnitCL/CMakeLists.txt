@@ -584,7 +584,7 @@ if(CMAKE_CROSSCOMPILING)
       ${PROJECT_SOURCE_DIR}/scripts/testing/run_cities.py -p gtest
       --qemu "${CTSEmulator}"
       --binary-path $<TARGET_FILE:UnitCL>
-      --add-env-var GTEST_FILTER=*Offline*Execution*
+      --add-env-var GTEST_FILTER=*Offline*Execution*:Subgroup*Offline*:Work_Group_Collective*Offline*:*Execution*Offline*
       --junit-result-file ${PROJECT_BINARY_DIR}/UnitCL-offline.xml
       $<$<BOOL:${CA_CL_ENABLE_ICD_LOADER}>:--add-env-var>
       $<$<BOOL:${CA_CL_ENABLE_ICD_LOADER}>:OCL_ICD_FILENAMES=$<TARGET_FILE:CL>>
