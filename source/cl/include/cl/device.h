@@ -32,6 +32,7 @@
 #include <compiler/info.h>
 #include <mux/mux.h>
 
+#include <list>
 #include <string>
 
 /// @addtogroup cl
@@ -54,6 +55,12 @@ struct _cl_device_id final : public cl::base<_cl_device_id> {
 
   /// @brief Destructor.
   ~_cl_device_id();
+
+  void RegisterCommandQueue(cl_command_queue queue);
+  void DeregisterCommandQueue(cl_command_queue queue);
+  void ShutdownQueues();
+  std::list<cl_command_queue>
+      registered_queues;  // TODO use a more sensible container
 
   /// @brief Platform the device belongs to.
   cl_platform_id platform;

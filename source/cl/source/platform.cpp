@@ -134,6 +134,7 @@ cargo::expected<cl_platform_id, cl_int> _cl_platform_id::getInstance() {
     // to perform any tear down at all.
     atexit([]() {
       for (auto device : platform.value()->devices) {
+        device->ShutdownQueues();
         cl::releaseInternal(device);
       }
       cl::releaseInternal(platform.value());

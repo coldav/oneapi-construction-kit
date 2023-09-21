@@ -147,6 +147,9 @@ class base {
   /// count is 0.
   cl_int releaseExternal(bool &should_destroy) {
     cl_uint last_ref_count = ref_count_external;
+    cl_uint last_internal_ref_count = ref_count_internal;
+    printf("OOOOOOO CSD releaseExternal %p %d %d\n", this, (int)last_ref_count,
+           (int)last_internal_ref_count);
     cl_uint next_ref_count;
     do {
       if (0u == last_ref_count) {

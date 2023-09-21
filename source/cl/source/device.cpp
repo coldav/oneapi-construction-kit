@@ -18,6 +18,7 @@
 #include <cargo/string_algorithm.h>
 #include <cargo/string_view.h>
 #include <cl/binary/binary.h>
+#include <cl/command_queue.h>
 #include <cl/config.h>
 #include <cl/device.h>
 #include <cl/limits.h>
@@ -328,6 +329,38 @@ _cl_device_id::_cl_device_id(cl_platform_id platform,
     OCL_ASSERT(error == cargo::success, "Out of memory");
   }
 #endif
+}
+
+void _cl_device_id::RegisterCommandQueue(cl_command_queue queue) {
+  registered_queues.push_back(queue);
+  printf("OOOOOOOO CSD ++++++ Register queue %p\n", queue);
+  (void)queue;
+}
+void _cl_device_id::DeregisterCommandQueue(cl_command_queue queue) {
+  registered_queues.remove_if(
+      [queue](cl_command_queue q) { return q == queue; });
+  printf("OOOOOOOO CSD ------ DERegister queue %p\n", queue);
+
+  (void)queue;
+}
+void _cl_device_id::ShutdownQueues() {
+  printf("OOOOOOOO CSD ------ shutting down queues\n");
+  // Need to copy as it will deregister as it goes along
+  auto queues = registered_queues;
+  for (auto q : queues) {
+    printf("OOOOOOOO CSD Shutting down queue %p\n", q);
+    while (true) {
+      bool should_destroy = false;
+      printf("Release, release again!!!\n");
+      q->releaseExternal(should_destroy);
+      if (should_destroy) {
+        printf("OOOOOOOOOO CSD Should destroy %d\n", (int)should_destroy);
+        delete q;
+        break;
+      }
+    }
+  }
+  registered_queues.clear();
 }
 
 _cl_device_id::~_cl_device_id() {
