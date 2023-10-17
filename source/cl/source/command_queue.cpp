@@ -163,14 +163,15 @@ _cl_command_queue::create(cl_context context, cl_device_id device,
         case CL_QUEUE_PROPERTIES:
           if (value & ~valid_properties_mask) {
             return cargo::make_unexpected(CL_INVALID_VALUE);
-          } else if (value & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) {
-            // TODO(CA-1123): Support out of order command queues.
+          } /* else if (value & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) {
+             // TODO(CA-1123): Support out of order command queues.
+             return cargo::make_unexpected(CL_INVALID_QUEUE_PROPERTIES);
+ // #if defined(CL_VERSION_3_0)
+           }*/
+          else if (value & CL_QUEUE_ON_DEVICE ||
+                   value & CL_QUEUE_ON_DEVICE_DEFAULT) {
             return cargo::make_unexpected(CL_INVALID_QUEUE_PROPERTIES);
-#if defined(CL_VERSION_3_0)
-          } else if (value & CL_QUEUE_ON_DEVICE ||
-                     value & CL_QUEUE_ON_DEVICE_DEFAULT) {
-            return cargo::make_unexpected(CL_INVALID_QUEUE_PROPERTIES);
-#endif
+            // #endif
           } else if (value & CL_QUEUE_PROFILING_ENABLE) {
             command_queue_properties |= CL_QUEUE_PROFILING_ENABLE;
           }

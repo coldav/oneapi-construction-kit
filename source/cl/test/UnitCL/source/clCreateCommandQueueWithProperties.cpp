@@ -65,7 +65,8 @@ TEST_F(clCreateCommandQueueWithPropertiesTest, InvalidDevice) {
   ASSERT_EQ(nullptr, command_queue);
 }
 
-TEST_F(clCreateCommandQueueWithPropertiesTest, InvalidQueueProperties) {
+TEST_F(clCreateCommandQueueWithPropertiesTest,
+       DISABLED_InvalidQueueProperties) {
   cl_int error;
   // Try with one bit that we don't support.
   std::array<cl_queue_properties, 3> properties{

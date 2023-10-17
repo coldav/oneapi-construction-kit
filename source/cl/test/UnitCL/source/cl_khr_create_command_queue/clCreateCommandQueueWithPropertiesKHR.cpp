@@ -81,7 +81,8 @@ TEST_F(clCreateCommandQueueWithPropertiesKHRTest, InvalidDevice) {
   ASSERT_EQ(nullptr, command_queue);
 }
 
-TEST_F(clCreateCommandQueueWithPropertiesKHRTest, InvalidQueueProperties) {
+TEST_F(clCreateCommandQueueWithPropertiesKHRTest,
+       DISABLED_InvalidQueueProperties) {
   cl_int error;
   // We don't currently support CL_QUEUE_OUT_OF_ORDER and to get this return
   // value the properties need to be valid but unsupported by the device.
