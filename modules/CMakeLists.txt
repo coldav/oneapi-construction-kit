@@ -27,11 +27,13 @@ set(MODULES_INCLUDE_DIRS # No default value
 set(MODULES_LIBRARIES # No default value
   CACHE INTERNAL "List of module libraries.")
 
+if (utils IN_LIST CA_BUILD_COMPONENTS)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/cargo)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/loader)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tracer)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/debug)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/utils)
+endif()
 
 # Fetch the official SPIR-V headers. These are required by some up our public
 # compiler headers, which are also included by mux, so this must take place
@@ -48,17 +50,26 @@ if(NOT spirv-headers_POPULATED)
   message(FATAL_ERROR "No SPIRV-Headers found.")
 endif()
 
+if (mux IN_LIST CA_BUILD_COMPONENTS)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/mux)
+endif()
 # compiler/builtins requires capabilities from ComputeMux targets.
+# if (compiler IN_LIST CA_BUILD_COMPONENTS)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/compiler)
+# endif()
+if (metadata IN_LIST CA_BUILD_COMPONENTS)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/metadata)
+endif()
+if (tests IN_LIST CA_BUILD_COMPONENTS)
 if(CA_ENABLE_TESTS)
   # mux tests depend on builtins.
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/mux/test)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/kts)
 endif()
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lit)
+endif()
 
-foreach(LIBRARY ${MODULES_LIBRARIES})
-  target_include_directories(${LIBRARY} PUBLIC ${MODULES_INCLUDE_DIRS})
-endforeach()
+# add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/api)
+# foreach(LIBRARY ${MODULES_LIBRARIES})
+#   target_include_directories(${LIBRARY} PUBLIC ${MODULES_INCLUDE_DIRS})
+# endforeach()
