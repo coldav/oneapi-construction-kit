@@ -459,6 +459,11 @@ endmacro()
   project wide compiler options and definitions to the target.
 #]=======================================================================]
 macro(add_ca_library)
+if(CA_NATIVE_CPU)
+#Todo: add_llvm_library doesn't take in a SHARED keyword, add_ca_library does
+#maybe it's better to drop it to avoid bugs?
+add_llvm_library(${ARGV})
+else()
   add_library(${ARGV})
   target_compile_options(${ARGV0}
     PRIVATE ${CA_COMPILE_OPTIONS})
@@ -475,6 +480,7 @@ macro(add_ca_library)
     # requested by the user.
     target_link_libraries(${ARGV0} PUBLIC debug-backtrace)
   endif()
+endif()
 endmacro()
 
 #[=======================================================================[.rst:
