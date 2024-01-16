@@ -120,7 +120,7 @@ add_ca_library(compiler-utils STATIC
   ${CMAKE_CURRENT_SOURCE_DIR}/source/work_item_loops_pass.cpp)
 
 target_include_directories(compiler-utils PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/include)
+$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
 target_compile_definitions(compiler-utils PRIVATE
   $<$<BOOL:${CA_PLATFORM_LINUX}>:CA_PLATFORM_LINUX>
