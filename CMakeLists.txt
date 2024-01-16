@@ -159,7 +159,7 @@ foreach(OPTIONS_MODULE ${OPTIONS_MODULES})
   endif()
 endforeach()
 
-if(CA_RUNTIME_COMPILER_ENABLED)
+if(CA_RUNTIME_COMPILER_ENABLED AND NOT CA_NATIVE_CPU)
   include(ImportLLVM)
 endif()
 
