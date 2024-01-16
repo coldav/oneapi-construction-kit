@@ -210,10 +210,10 @@ function(add_ca_cl_check name)
       # to the Inject subdirectory of DumpDir and renamed.
       set(injectPrepareBins
         ${PROJECT_SOURCE_DIR}/scripts/testing/inject-prepare-bins.py)
-      add_custom_target(check-${name}-prepare
+      add_custom_target(ca-check-${name}-prepare
         COMMAND ${PYTHON_EXECUTABLE}
           ${injectPrepareBins} --clean ${dumpDirectory}
-        DEPENDS check-${name}-dump
+        DEPENDS ca-check-${name}-dump
         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
         COMMENT "Running ${name}-prepare checks")
 
@@ -224,8 +224,8 @@ function(add_ca_cl_check name)
   endif()
   add_ca_check(${name}
     ${args_UNPARSED_ARGUMENTS} ENVIRONMENT ${environment})
-  add_dependencies(check-cl check-${name})
+  add_dependencies(ca-check-cl ca-check-${name})
   if(CA_CL_ENABLE_INTERCEPT_LAYER)
-    add_dependencies(check-${name} check-${name}-prepare)
+    add_dependencies(ca-check-${name} ca-check-${name}-prepare)
   endif()
 endfunction()

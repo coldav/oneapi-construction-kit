@@ -686,7 +686,7 @@ macro(get_target_link_libraries variable target)
 endmacro()
 
 # Add the check target to run all registered checks, see add_ca_check() below.
-add_custom_target(check COMMENT "ComputeAorta checks.")
+add_custom_target(ca-check COMMENT "ComputeAorta checks.")
 
 if(CMAKE_CROSSCOMPILING AND NOT CMAKE_CROSSCOMPILING_EMULATOR)
   message(WARNING "ComputeAorta check targets disabled as "
@@ -783,17 +783,17 @@ function(add_ca_check name)
   endif()
   # Add a custom target, which runs the test, to the test target.
   if(args_USES_TERMINAL)
-    add_custom_target(check-${name}
+    add_custom_target(ca-check-${name}
       COMMAND ${command} WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
       USES_TERMINAL
       DEPENDS ${args_DEPENDS} COMMENT "Running ${name} checks")
   else()
-    add_custom_target(check-${name}
+    add_custom_target(ca-check-${name}
       COMMAND ${command} WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
       DEPENDS ${args_DEPENDS} COMMENT "Running ${name} checks")
   endif()
   if(NOT args_NOGLOBAL)
-    add_dependencies(check check-${name})
+    add_dependencies(ca-check ca-check-${name})
   endif()
   if(CA_ENABLE_COVERAGE AND (CA_RUNTIME_COMPILER_ENABLED OR
       (NOT CA_RUNTIME_COMPILER_ENABLED AND ${name} STREQUAL "UnitCL")))
@@ -837,7 +837,7 @@ function(add_ca_check_group name)
       "add_ca_check_group invalid arguments: ${args_UNPARSED_ARGUMENTS}")
   endif()
   # Add a custom target, which depends on all listed targets.
-  add_custom_target(check-${name}
+  add_custom_target(ca-check-${name}
     DEPENDS ${args_DEPENDS}
     COMMENT "Running ${name} group checks")
 endfunction()

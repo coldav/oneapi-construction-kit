@@ -429,7 +429,7 @@ function(add_ca_unitcl_check name)
     --gtest_output=xml:${PROJECT_BINARY_DIR}/${name}.xml ${args_ARGS} ${filter}
     ${environment} CLEAN ${PROJECT_BINARY_DIR}/${name}.xml NOGLOBAL DEPENDS UnitCL)
   if (args_GROUP)
-    add_dependencies(${args_GROUP} check-${name})
+    add_dependencies(${args_GROUP} ca-check-${name})
   endif()
 endfunction()
 
@@ -440,12 +440,12 @@ add_ca_check_group(UnitCL-group-vecz)
 
 # Convenience function to add a UnitCL check in the default group
 function(add_ca_default_unitcl_check name)
-  add_ca_unitcl_check(${name} ${ARGV} GROUP check-UnitCL-group)
+  add_ca_unitcl_check(${name} ${ARGV} GROUP ca-check-UnitCL-group)
 endfunction()
 
 # Convenience function to add a UnitCL check in the vecz group
 function(add_ca_vecz_unitcl_check name)
-  add_ca_unitcl_check(${name} ${ARGV} GROUP check-UnitCL-group-vecz)
+  add_ca_unitcl_check(${name} ${ARGV} GROUP ca-check-UnitCL-group-vecz)
 endfunction()
 
 
@@ -494,7 +494,7 @@ add_ca_default_unitcl_check(UnitCL-prevec-opt-disable COMPILER
   ENVIRONMENT "CA_EXTRA_COMPILE_OPTS=-cl-vec=all -cl-opt-disable")
 
 # Add this group to the global check target
-add_dependencies(check check-UnitCL-group)
+add_dependencies(ca-check ca-check-UnitCL-group)
 
 if(NOT CA_CL_DISABLE_UNITCL_VECZ_CHECKS)
   add_ca_vecz_unitcl_check(UnitCL-vecz COMPILER
@@ -558,7 +558,7 @@ if(NOT CA_CL_DISABLE_UNITCL_VECZ_CHECKS)
     ARGS --vecz-check)
 
   # Add this group to the global check target
-  add_dependencies(check check-UnitCL-group-vecz)
+  add_dependencies(ca-check ca-check-UnitCL-group-vecz)
 endif()
 
 if(OCL_EXTENSION_cl_intel_unified_shared_memory)
