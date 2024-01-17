@@ -121,10 +121,12 @@ add_ca_library(compiler-utils STATIC
 
 target_include_directories(compiler-utils PUBLIC
 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
-target_include_directories(compiler-utils PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../multi_llvm/include)
+target_include_directories(compiler-utils PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../multi_llvm/include>)
 
+if (NOT CA_NATIVE_CPU)
 target_include_directories(compiler-utils SYSTEM PUBLIC
   ${LLVM_INCLUDE_DIR})
+endif()
 
 target_compile_definitions(compiler-utils PRIVATE
   $<$<BOOL:${CA_PLATFORM_LINUX}>:CA_PLATFORM_LINUX>
