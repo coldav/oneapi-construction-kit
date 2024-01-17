@@ -121,6 +121,10 @@ add_ca_library(compiler-utils STATIC
 
 target_include_directories(compiler-utils PUBLIC
 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+target_include_directories(compiler-utils PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../multi_llvm/include)
+
+target_include_directories(compiler-utils SYSTEM PUBLIC
+  ${LLVM_INCLUDE_DIR})
 
 target_compile_definitions(compiler-utils PRIVATE
   $<$<BOOL:${CA_PLATFORM_LINUX}>:CA_PLATFORM_LINUX>
@@ -130,7 +134,7 @@ target_compile_definitions(compiler-utils PRIVATE
   $<$<BOOL:${CA_PLATFORM_QNX}>:CA_PLATFORM_QNX>)
 
 target_link_libraries(compiler-utils PUBLIC
-  multi_llvm LLVMPasses LLVMTransformUtils)
+  LLVMPasses LLVMTransformUtils)
 if(TARGET LLVMCore)
   target_link_libraries(compiler-utils PUBLIC LLVMCore)
 endif()

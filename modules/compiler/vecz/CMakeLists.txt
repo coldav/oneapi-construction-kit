@@ -176,10 +176,10 @@ if(CA_VECZ_ONLY)
 else()
   # We want a static library for linking with libOpenCL
   add_ca_library(vecz STATIC ${MODULES_LIBRARY_TYPE} ${COMMON_SRCS})
-  target_include_directories(vecz PUBLIC
-    "${LLVM_INCLUDE_DIRS}")
-  target_include_directories(vecz SYSTEM PUBLIC
-    ${CA_LLVM_INSTALL_DIR}/include)
+  # target_include_directories(vecz PUBLIC
+  #   "${LLVM_INCLUDE_DIRS}")
+  # target_include_directories(vecz SYSTEM PUBLIC
+  #   ${CA_LLVM_INSTALL_DIR}/include)
 
   llvm_map_components_to_libnames(LLVM_LIBS
     support core analysis instcombine transformutils scalaropts ipo passes)
@@ -188,11 +188,13 @@ endif()
 target_include_directories(vecz
   PUBLIC $<BUILD_INTERFACE:${VECZ_PUBLIC_INCLUDE_DIR}>
   PRIVATE $<BUILD_INTERFACE:${VECZ_PRIVATE_INCLUDE_DIR}>)
+target_include_directories(vecz PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../multi_llvm/include>)
+
 target_compile_options(vecz PRIVATE ${VECZ_COMPILE_OPTIONS})
 target_compile_definitions(vecz PRIVATE
   ${VECZ_COMPILE_DEFINITIONS})
 
-target_link_libraries(vecz PRIVATE compiler-utils multi_llvm PUBLIC ${LLVM_LIBS})
+target_link_libraries(vecz PRIVATE compiler-utils PUBLIC ${LLVM_LIBS})
 
 # intrinsics_gen uses tablegen to generate Attributes.inc, which is
 # (recursively) included by 'llvm/IR/Module.h', therefore this module depends
