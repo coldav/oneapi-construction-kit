@@ -183,7 +183,8 @@ bool BasicMem2RegPass::promoteAlloca(AllocaInst *Alloca) const {
       StoredValue = Store->getValueOperand();
       ToDelete.push_back(Store);
       DIBuilder DIB(*Alloca->getModule(), /*AllowUnresolved*/ false);
-#if LLVM_VERSION_GREATER_EQUAL(18, 0)
+#if 0
+//LLVM_VERSION_GREATER_EQUAL(18, 0) -- pietro/develop too far behind
       SmallVector<DbgDeclareInst *, 1> DbgIntrinsics;
       findDbgDeclares(DbgIntrinsics, Alloca);
 #elif LLVM_VERSION_GREATER_EQUAL(17, 0)

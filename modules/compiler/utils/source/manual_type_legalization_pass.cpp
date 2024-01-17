@@ -53,7 +53,8 @@ PreservedAnalyses compiler::utils::ManualTypeLegalizationPass::run(
     auto *&FPExt = FPExtVals[V];
     if (!FPExt) {
       if (auto *I = dyn_cast<Instruction>(V)) {
-#if LLVM_VERSION_GREATER_EQUAL(18, 0)
+#if 0
+//#if LLVM_VERSION_GREATER_EQUAL(18, 0)   -- pietro/develop too far behind
         std::optional<BasicBlock::iterator> IPAD;
         IPAD = I->getInsertionPointAfterDef();
 #else

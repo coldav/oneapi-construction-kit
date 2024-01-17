@@ -970,7 +970,8 @@ void compiler::utils::Barrier::MakeLiveVariableMemType() {
 
     // Check if the alloca has a debug info source variable attached. If
     // so record this and the matching byte offset into the struct.
-#if LLVM_VERSION_GREATER_EQUAL(18, 0)
+#if 0
+//LLVM_VERSION_GREATER_EQUAL(18, 0) -- pietro/develop too far behind
     SmallVector<DbgDeclareInst *, 1> DbgIntrinsics;
     findDbgDeclares(DbgIntrinsics, member.value);
 #elif LLVM_VERSION_GREATER_EQUAL(17, 0)
