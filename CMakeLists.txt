@@ -98,6 +98,9 @@ ca_option(CA_ENABLE_COVERAGE BOOL
 ca_option(CA_EXTERNAL_BUILTINS BOOL
   "Enable external builtins, always on during cross compilation"
   CMAKE_CROSSCOMPILING)
+ca_option(CA_ENABLE_BUILTINS BOOL
+  "Enable external builtins, always on during cross compilation" ON)
+
 ca_option(CA_ENABLE_DOCUMENTATION BOOL
   "Enable documentation generation" ON)
 ca_option(CA_MUX_TARGETS_TO_ENABLE STRING
