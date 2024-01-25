@@ -40,8 +40,12 @@ some additional compile definitions.
 #]=======================================================================]
 
 if(CA_RUNTIME_COMPILER_ENABLED AND NOT CA_LLVM_INSTALL_DIR)
-  message(FATAL_ERROR
-    "CA_LLVM_INSTALL_DIR must be given when CA_RUNTIME_COMPILER_ENABLED is set")
+  if (DEFINED LLVM_VERSION_MAJOR)
+    return()
+  else()
+    message(FATAL_ERROR
+      "CA_LLVM_INSTALL_DIR must be given when CA_RUNTIME_COMPILER_ENABLED is set")
+  endif()
 endif()
 
 # Add our cmake modules directory to the cmake include path including
