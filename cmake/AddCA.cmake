@@ -144,6 +144,7 @@ set(CA_COMPILE_OPTIONS
     -Wall -Wextra         # Enable more warnings
     -Wno-variadic-macros  # Disable: warnings about variadic macros
     -Wformat              # Enable printf format warnings
+    -Wpedantic
 
     $<$<NOT:$<BOOL:${MINGW}>>:
       -fPIC               # Emit position-independent code
