@@ -26,7 +26,9 @@ target_compile_definitions(muxc PRIVATE
   muxc_VERSION="${PROJECT_VERSION}"
   muxc_LLVM_VERSION="${LLVM_PACKAGE_VERSION}"
   muxc_CL_STD_30=$<BOOL:${muxc_CL_STD_30}>)
-target_include_directories(muxc SYSTEM PUBLIC ${LLVM_INCLUDE_DIR})
+if (NOT CA_NATIVE_CPU)    
+  target_include_directories(muxc SYSTEM PUBLIC ${LLVM_INCLUDE_DIR})
+endif()
 target_include_directories(muxc PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/modules/compiler/source/base/include>
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/source/cl/source/compiler/include>
