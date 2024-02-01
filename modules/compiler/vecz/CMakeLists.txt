@@ -205,7 +205,7 @@ if(TARGET intrinsics_gen)
   add_dependencies(vecz intrinsics_gen)
 endif()
 
-if(NOT CA_VECZ_ONLY)
+if(NOT CA_VECZ_ONLY AND (CA_ENABLE_TESTS OR CA_ENABLE_TOOLS))
   add_subdirectory(tools)
   if(CA_ENABLE_TESTS)
     add_subdirectory(test)

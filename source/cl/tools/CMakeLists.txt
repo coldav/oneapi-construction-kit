@@ -15,7 +15,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 # Only build tools if a runtime compiler is present
-if(CA_RUNTIME_COMPILER_ENABLED)
+if(CA_RUNTIME_COMPILER_ENABLED AND (CA_ENABLE_TOOLS OR CA_ENABLE_TESTS))
   add_subdirectory(clc)
   add_subdirectory(oclc)
 endif()
