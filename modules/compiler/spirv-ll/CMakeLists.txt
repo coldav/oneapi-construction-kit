@@ -71,9 +71,11 @@ target_include_directories(spirv-ll SYSTEM PUBLIC
   ${spirv-headers_SOURCE_DIR}/include ${LLVM_INCLUDE_DIR})
 target_link_libraries(spirv-ll PUBLIC cargo multi_llvm compiler-pipeline LLVMCore LLVMBitWriter)
 
-add_subdirectory(tools)
-if(CA_ENABLE_TESTS)
-  add_subdirectory(test)
+if (CA_ENABLE_TESTS OR CA_ENABLE_TOOLS)
+  add_subdirectory(tools)
+  if(CA_ENABLE_TESTS)
+    add_subdirectory(test)
+  endif()
 endif()
 
 # Append to the list of module libraries, the cache MUST be updated.

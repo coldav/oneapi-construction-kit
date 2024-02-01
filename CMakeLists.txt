@@ -83,6 +83,8 @@ ca_option(CA_ENABLE_TESTS BOOL
   "Enable building tests" ON)
 ca_option(CA_ENABLE_EXAMPLES BOOL
   "Enable building example programs" ON)
+ca_option(CA_ENABLE_TOOLS BOOL
+  "Enable building tools (note CA_ENABLE_TESTS may enable some tools regardless)" ON)
 ca_option(CA_ENABLE_HOST_IMAGE_SUPPORT BOOL
   "Enable host image support" OFF)
 ca_option(CA_ENABLE_OUT_OF_ORDER_EXEC_MODE BOOL
