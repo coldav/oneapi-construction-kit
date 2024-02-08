@@ -38,10 +38,17 @@ to :cmake-variable:`CMAKE_MODULE_PATH`, and import the following LLVM modules:
 Once the modules are included we verify the LLVM version is supported and set
 some additional compile definitions.
 #]=======================================================================]
+set(CA_IN_LLVM_TREE OFF)
+if (DEFINED LLVM_VERSION_MAJOR)
+  # TODO : Is there a better way?
+  set(CA_IN_LLVM_TREE ON)
+return()
+else()
 
 if(CA_RUNTIME_COMPILER_ENABLED AND NOT CA_LLVM_INSTALL_DIR)
-  message(FATAL_ERROR
-    "CA_LLVM_INSTALL_DIR must be given when CA_RUNTIME_COMPILER_ENABLED is set")
+    message(FATAL_ERROR
+      "CA_LLVM_INSTALL_DIR must be given when CA_RUNTIME_COMPILER_ENABLED is set")
+  endif()
 endif()
 
 # Add our cmake modules directory to the cmake include path including
