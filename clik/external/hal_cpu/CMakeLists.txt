@@ -23,8 +23,11 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} -fvisibility=hidden)
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -fvisibility=hidden)
 
-set_property(GLOBAL APPEND PROPERTY KNOWN_HAL_DEVICES "cpu")
+set_property(GLOBAL PROPERTY HAL_CPU_NAME "cpu")
+set_property(GLOBAL PROPERTY HAL_CPU_DEVICE_NAME "cpu")
 set_property(GLOBAL PROPERTY HAL_CPU_DIR "${HAL_CPU_SOURCE_DIR}")
 set_property(GLOBAL PROPERTY HAL_CPU_EXAMPLE_DIR "${HAL_CPU_SOURCE_DIR}/examples/wi")
-
+set_property(GLOBAL APPEND PROPERTY KNOWN_HAL_DEVICES "cpu")
 add_subdirectory(source)
+
+message("***** CSD Included HAL directory!!")
