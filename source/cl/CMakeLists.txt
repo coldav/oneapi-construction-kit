@@ -17,6 +17,7 @@
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 include(AddCACL)
+include(FetchContent)
 
 # If no library version is given, use the project version
 if("${CA_CL_LIBRARY_VERSION}" STREQUAL "")
@@ -84,8 +85,17 @@ message(STATUS "OpenCL device version: ${CA_CL_DEVICE_VERSION}")
 set(CA_CL_DEVICE_OPENCL_C_VERSION "OpenCL C 1.2 Clang ${LLVM_PACKAGE_VERSION}")
 message(STATUS "OpenCL C version: ${CA_CL_DEVICE_OPENCL_C_VERSION}")
 
-set(CL_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/OpenCL-Headers
-  CACHE PATH "OpenCL header include directory" FORCE)
+# FetchContent the OpenCL Headers - -DFETCHCONTENT_SOURCE_DIR_OPENCL_HEADERS can
+# be set to fetch from a prefetched source
+FetchContent_Declare(
+  OpenCL_HEADERS
+  GIT_REPOSITORY https://github.com/KhronosGroup/OpenCL-Headers.git
+  GIT_TAG        68d98613113259dbcd4c05b2039bb758766bf2ac
+)
+FetchContent_MakeAvailable(OpenCL_HEADERS)
+
+set(CL_INCLUDE_DIR ${opencl_headers_SOURCE_DIR})
+message("***** CSD CL_INCLUDE_DIR=${CL_INCLUDE_DIR} opencl_headers_SOURCE_DIR=${opencl_headers_SOURCE_DIR}")
 
 # If the online coverage is enabled we add the modules so that the XML file
 # can be generated automatically.
