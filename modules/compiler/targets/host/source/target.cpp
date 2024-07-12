@@ -101,6 +101,28 @@ static llvm::TargetMachine *createTargetMachine(llvm::Triple TT,
       multi_llvm::CodeGenOptLevel::Aggressive,
       /*JIT=*/true);
 }
+void UpdateFeatureMapFromString(llvm::StringMap<bool> &FeatureMap,
+                                llvm::StringRef FeatureString) {
+  (void)FeatureMap;
+  if (FeatureString.empty()) {
+    return;
+  }
+  llvm::SmallVector<llvm::StringRef,4> split;
+  FeatureString.split(split, ',', /*MaxSplit*/-1, /*KeepEmpty*/false);
+  for (auto Current : split) {
+    llvm::StringRef trimmed = Current.ltrim().rtrim();
+    char FirstChar = trimmed[0];
+    llvm::StringRef Feature = trimmed.drop_front(1);
+    if (FirstChar == '+') {
+      FeatureMap[Feature] = true;
+    } else if (FirstChar == '-') {
+      FeatureMap[Feature] = false;
+    } else {
+      llvm::errs() << "Warning: '" << FirstChar
+                   << "' should be '-' or '+'  to add or remove feature\n";
+    }
+  }
+}
 
 HostTarget::HostTarget(const HostInfo *compiler_info,
                        compiler::Context *context,
@@ -242,6 +264,7 @@ compiler::Result HostTarget::initWithBuiltins(
   llvm::StringRef ABI = "";
   llvm::StringRef CPUName = "";
   llvm::StringMap<bool> FeatureMap;
+  std::string FeatureStr;
 
   if (llvm::Triple::arm == triple.getArch()) {
     FeatureMap["strict-align"] = true;
@@ -262,9 +285,15 @@ compiler::Result HostTarget::initWithBuiltins(
 #if defined(CA_HOST_TARGET_ARM_CPU)
     CPUName = CA_HOST_TARGET_ARM_CPU;
 #endif
+#if defined(CA_HOST_TARGET_ARM_FEATURES)
+    FeatureStr = CA_HOST_TARGET_ARM_FEATURES;
+#endif
   } else if (llvm::Triple::aarch64 == triple.getArch()) {
 #if defined(CA_HOST_TARGET_AARCH64_CPU)
     CPUName = CA_HOST_TARGET_AARCH64_CPU;
+#endif
+#if defined(CA_HOST_TARGET_AARCH64_FEATURES)
+    FeatureStr = CA_HOST_TARGET_AARCH64_FEATURES;
 #endif
   } else if (triple.isX86()) {
     CPUName = "x86-64-v3";  // Default only, may be overridden below.
@@ -272,9 +301,15 @@ compiler::Result HostTarget::initWithBuiltins(
 #if defined(CA_HOST_TARGET_X86_CPU)
       CPUName = CA_HOST_TARGET_X86_CPU;
 #endif
+#if defined(CA_HOST_TARGET_X86_FEATURES)
+      FeatureStr = CA_HOST_TARGET_X86_FEATURES;
+#endif
     } else {
 #if defined(CA_HOST_TARGET_X86_64_CPU)
       CPUName = CA_HOST_TARGET_X86_64_CPU;
+#endif
+#if defined(CA_HOST_TARGET_X86_64_FEATURES)
+      FeatureStr = CA_HOST_TARGET_X86_64_FEATURES;
 #endif
     }
   } else if (triple.isRISCV()) {
@@ -286,11 +321,17 @@ compiler::Result HostTarget::initWithBuiltins(
 #if defined(CA_HOST_TARGET_RISCV32_CPU)
       CPUName = CA_HOST_TARGET_RISCV32_CPU;
 #endif
+#if defined(CA_HOST_TARGET_RISCV32_FEATURES)
+      FeatureStr = CA_HOST_TARGET_RISCV32_FEATURES;
+#endif
     } else {
       ABI = "lp64d";
       CPUName = "generic-rv64";
 #if defined(CA_HOST_TARGET_RISCV64_CPU)
       CPUName = CA_HOST_TARGET_RISCV64_CPU;
+#endif
+#if defined(CA_HOST_TARGET_RISCV64_FEATURES)
+      FeatureStr = CA_HOST_TARGET_RISCV64_FEATURES;
 #endif
     }
     // The following features are important for OpenCL, and generally constitute
@@ -314,11 +355,19 @@ compiler::Result HostTarget::initWithBuiltins(
   }
 #endif
 
+#ifndef NDEBUG
+  if (const char *E = getenv("CA_HOST_TARGET_FEATURES")) {
+    FeatureStr = E;
+  }
+#endif
+
   if (CPUName == "native") {
     CPUName = llvm::sys::getHostCPUName();
     FeatureMap.clear();
     llvm::sys::getHostCPUFeatures(FeatureMap);
   }
+
+  UpdateFeatureMapFromString(FeatureMap, FeatureStr);
 
   if (compiler_info->supports_deferred_compilation) {
     llvm::orc::JITTargetMachineBuilder TMBuilder(triple);
@@ -377,8 +426,8 @@ compiler::Result HostTarget::initWithBuiltins(
     target_machine = std::move(*TM);
   } else {
     // No JIT support so create target machine directly.
-    std::string Features;
     bool first = true;
+    std::string Features;
     for (auto &[FeatureName, IsEnabled] : FeatureMap) {
       if (first) {
         first = false;
