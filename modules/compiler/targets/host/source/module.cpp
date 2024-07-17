@@ -125,6 +125,23 @@ emitBinary(llvm::Module *module, llvm::TargetMachine *target_machine) {
 
   std::copy(object_code_buffer.begin(), object_code_buffer.end(),
             binary.begin());
+#ifndef NDEBUG
+  if (const char *env_binary = std::getenv("CA_HOST_COPY_BINARY")) {
+    FILE *fp = fopen(env_binary, "rb");
+    if (fp) {
+      fseek(fp, 0, SEEK_END);
+      auto len = ftell(fp);
+      rewind(fp);
+      if (binary.alloc(len)) {
+        return cargo::make_unexpected(compiler::Result::OUT_OF_MEMORY);
+      } else {
+        (void)fread(binary.data(), len, 1, fp);
+      }
+    } else {
+      fprintf(stderr, "Error : Unable to open '%s'\n", env_binary);
+    }
+  }
+#endif
 
   return {std::move(binary)};
 }

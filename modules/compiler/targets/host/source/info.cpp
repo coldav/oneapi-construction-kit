@@ -68,7 +68,7 @@ HostInfo::HostInfo(host::arch arch, host::os os,
   // If we're instantiating a compiler for the current system, then we know it
   // supports runtime compilation, otherwise it's a cross compiler.
   device_info = host_device_info;
-  supports_deferred_compilation = host_device_info->native;
+  supports_deferred_compilation = false;//host_device_info->native;
 
   // JIT compilation is not yet supported on RISC-V
   if (arch == host::arch::RISCV32 || arch == host::arch::RISCV64) {
