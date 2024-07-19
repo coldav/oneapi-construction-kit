@@ -701,6 +701,13 @@ cargo::optional<uint32_t> getHi20(int64_t addr) {
 // assumes little-endian RISCV
 bool resolveRISCV(const loader::Relocation &r, loader::ElfMap &map,
                   const std::vector<loader::Relocation> &relocations) {
+  // The ALIGN relocation is special and is related to keeping alignment with
+  // nops after linking. Currently skip this as we believe this is not required.
+  // Additionally it has no symbol which decomposeRelocation does not handle, so
+  // this would need fixed if this is ever implemented.
+  if (r.type == loader::RelocationTypes::RISCV::R_RISCV_ALIGN) {
+    return true;
+  }
   const auto relocation_data = decomposeRelocation<uint64_t>(r, map);
   if (!relocation_data) {
     return false;
@@ -813,6 +820,37 @@ bool resolveRISCV(const loader::Relocation &r, loader::ElfMap &map,
       writeITypeImm(getLo12(relative_value), relocation_address + 4);
       break;
     }
+    case R_RISCV_BRANCH: {
+      // R_RISCV_BRANCH immediate is for B-Type instructions and is split
+      // across 12 bits spread across the instruction and skips the bottom bit
+      // see conditional branches in the isa spec
+      uint32_t value;
+      uint32_t trunc_value = static_cast<uint32_t>(relative_value);
+      cargo::read_little_endian(&value, relocation_address);
+      // imm bits 1-4 at bit 8
+      value = setBitRange(value, trunc_value >> 1, 8, 4);
+      // imm bits 5-10 at bit 25
+      value = setBitRange(value, trunc_value >> 5, 25, 6);
+      // imm bit 11 at bit 7
+      value = setBitRange(value, trunc_value >> 11, 7, 1);
+      // imm bit 12 at bit 31
+      value = setBitRange(value, trunc_value >> 12, 31, 1);
+      cargo::write_little_endian(value, relocation_address);
+      break;
+    }
+
+    case R_RISCV_RVC_JUMP: {
+      // R_RISCV_RVC_JUMP is for compressed instructions and fits in bits 2-12
+      // of a 16 bit value and skips the bottom bit. See CJ format in the isa
+      // spec.
+      uint16_t value;
+      cargo::read_little_endian(&value, relocation_address);
+      const uint16_t offset_16 = static_cast<uint16_t>(relative_value) >> 1;
+      value = setBitRange(value, offset_16, 2, 11);
+      cargo::write_little_endian(value, relocation_address);
+      break;
+    }
+
     case R_RISCV_ADD32: {
       // 32-bit label addition: V + S + A
       uint32_t value;
