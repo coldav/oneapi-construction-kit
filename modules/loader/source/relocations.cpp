@@ -675,14 +675,15 @@ uint32_t getLo12(uint64_t addr) {
   return static_cast<uint32_t>(getBitRange(addr, 0, 12));
 }
 
+// Sign extends a number in the bottom 'b' bits of a 64-bit number back up to
+// a 64-bit number.
+int64_t signExtendN(uint64_t val, unsigned b) {
+  CARGO_ASSERT(b > 0, "bit-width cannot be zero");
+  CARGO_ASSERT(b <= 64, "bit-width out of range");
+  return static_cast<int64_t>(val << (64 - b)) >> (64 - b);
+}
+
 cargo::optional<uint32_t> getHi20(int64_t addr) {
-  // Sign extends a number in the bottom 'b' bits of a 64-bit number back up to
-  // a 64-bit number.
-  auto signExtendN = [](uint64_t val, unsigned b) {
-    CARGO_ASSERT(b > 0, "bit-width cannot be zero");
-    CARGO_ASSERT(b <= 64, "bit-width out of range");
-    return static_cast<int64_t>(val << (64 - b)) >> (64 - b);
-  };
   // See documentation for why we add 0x800 here:
   // https://github.com/riscv-non-isa/riscv-elf-psabi-doc/blob/master/riscv-elf.adoc#absolute-addresses
   // https://github.com/riscv-non-isa/riscv-elf-psabi-doc/blob/master/riscv-elf.adoc#pc-relative-symbol-addresses
@@ -706,6 +707,7 @@ bool resolveRISCV(const loader::Relocation &r, loader::ElfMap &map,
   // Additionally it has no symbol which decomposeRelocation does not handle, so
   // this would need fixed if this is ever implemented.
   if (r.type == loader::RelocationTypes::RISCV::R_RISCV_ALIGN) {
+    // TODO: Check that we fit the alignment constraints as is.
     return true;
   }
   const auto relocation_data = decomposeRelocation<uint64_t>(r, map);
@@ -823,9 +825,24 @@ bool resolveRISCV(const loader::Relocation &r, loader::ElfMap &map,
     case R_RISCV_BRANCH: {
       // R_RISCV_BRANCH immediate is for B-Type instructions and is split
       // across 12 bits spread across the instruction and skips the bottom bit
-      // see conditional branches in the isa spec
+      // of the input relative offset. See conditional branches in the isa spec.
+
+      // Check that the value, when sign-extended back up to a 64-bit number
+      // will not lose bits.
+      if (signExtendN(relative_value, 13) !=
+          static_cast<int64_t>(relative_value & (~1))) {
+#ifndef NDEBUG
+        auto name =
+            map.getSymbolName(r.symbol_index).value_or("<unknown symbol>");
+        (void)fprintf(stderr,
+                      "Error: relocation R_RISCV_BRANCH branch > 13 bits or "
+                      "not even for symbol '%.*s'\n",
+                      (int)name.size(), name.data());
+#endif
+        return false;
+      }
       uint32_t value;
-      uint32_t trunc_value = static_cast<uint32_t>(relative_value);
+      const uint32_t trunc_value = static_cast<uint32_t>(relative_value);
       cargo::read_little_endian(&value, relocation_address);
       // imm bits 1-4 at bit 8
       value = setBitRange(value, trunc_value >> 1, 8, 4);
@@ -841,8 +858,24 @@ bool resolveRISCV(const loader::Relocation &r, loader::ElfMap &map,
 
     case R_RISCV_RVC_JUMP: {
       // R_RISCV_RVC_JUMP is for compressed instructions and fits in bits 2-12
-      // of a 16 bit value and skips the bottom bit. See CJ format in the isa
-      // spec.
+      // of a 16 bit value and skips the bottom bit of the input. See CJ format
+      // in the isa spec.
+
+      // Check that the value, when sign-extended back up to a 64-bit number
+      // will not lose bits.
+      if (signExtendN(relative_value, 12) !=
+          static_cast<int64_t>(relative_value & (~1))) {
+#ifndef NDEBUG
+        auto name =
+            map.getSymbolName(r.symbol_index).value_or("<unknown symbol>");
+        (void)fprintf(stderr,
+                      "Error: relocation R_RISCV_RVC_JUMP > 12 bits or not "
+                      "even for symbol '%.*s'\n",
+                      (int)name.size(), name.data());
+#endif
+        return false;
+      }
+
       uint16_t value;
       cargo::read_little_endian(&value, relocation_address);
       const uint16_t offset_16 = static_cast<uint16_t>(relative_value) >> 1;
