@@ -876,6 +876,10 @@ bool BIMuxInfoConcept::requiresSchedulingParameters(BuiltinID ID) {
 }
 
 Type *BIMuxInfoConcept::getRemappedTargetExtTy(Type *Ty, Module &M) {
+#if LLVM_VERSION_LESS(17, 0)
+  (void)M;
+  (void)Ty;
+#else
   // We only map target extension types
   assert(Ty && Ty->isTargetExtTy() && "Only expecting target extension types");
   auto &Ctx = Ty->getContext();
@@ -904,6 +908,7 @@ Type *BIMuxInfoConcept::getRemappedTargetExtTy(Type *Ty, Module &M) {
     }());
   }
 
+#endif
   return nullptr;
 }
 

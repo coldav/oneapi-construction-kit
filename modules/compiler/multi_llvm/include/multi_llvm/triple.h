@@ -13,13 +13,15 @@
 // under the License.
 //
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#ifndef MULTI_LLVM_TRIPLE_H_INCLUDED
+#define MULTI_LLVM_TRIPLE_H_INCLUDED
 
-#ifndef MULTI_LLVM_MULTI_LLVM_H_INCLUDED
-#define MULTI_LLVM_MULTI_LLVM_H_INCLUDED
-
-#include <multi_llvm/enums.h>
 #include <multi_llvm/llvm_version.h>
-#include <multi_llvm/loop_utils.h>
-#include <multi_llvm/triple.h>
 
-#endif  // MULTI_LLVM_MULTI_LLVM_H_INCLUDED
+#if LLVM_VERSION_MAJOR >= 17
+#include <llvm/TargetParser/Triple.h>
+#else
+#include <llvm/ADT/Triple.h>
+#endif
+
+#endif  // MULTI_LLVM_TRIPLE_H_INCLUDED

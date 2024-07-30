@@ -33,7 +33,6 @@
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/Target/TargetOptions.h>
-#include <llvm/TargetParser/SubtargetFeature.h>
 #include <multi_llvm/multi_llvm.h>
 
 #if LLVM_VERSION_GREATER_EQUAL(18, 0)

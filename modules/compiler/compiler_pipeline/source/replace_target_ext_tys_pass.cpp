@@ -25,6 +25,8 @@
 
 using namespace llvm;
 
+#if LLVM_VERSION_GREATER_EQUAL(17, 0)
+
 class TargetExtTypeRemapper : public ValueMapTypeRemapper {
  public:
   TargetExtTypeRemapper(Module &M, compiler::utils::BuiltinInfo &BI,
@@ -198,3 +200,15 @@ PreservedAnalyses compiler::utils::ReplaceTargetExtTysPass::run(
   return PreservedAnalyses::none();
 }
 
+#else
+
+PreservedAnalyses compiler::utils::ReplaceTargetExtTysPass::run(
+    Module &, ModuleAnalysisManager &) {
+  // There's no target extension types to remap before LLVM 17.
+  (void)ReplaceEvents;
+  (void)ReplaceImages;
+  (void)ReplaceSamplers;
+  return PreservedAnalyses::all();
+}
+
+#endif

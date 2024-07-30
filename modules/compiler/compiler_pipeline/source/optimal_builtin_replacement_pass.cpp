@@ -28,6 +28,7 @@
 #include <llvm/IR/Intrinsics.h>
 #include <llvm/IR/Module.h>
 #include <llvm/TargetParser/Triple.h>
+#include <multi_llvm/triple.h>
 #include <multi_llvm/vector_type_helper.h>
 
 #define DEBUG_TYPE "ca-optimal-builtins"
@@ -232,7 +233,7 @@ PreservedAnalyses OptimalBuiltinReplacementPass::run(LazyCallGraph::SCC &C,
         [BI](CallBase &CB, StringRef, const SmallVectorImpl<Type *> &,
              const SmallVectorImpl<TypeQualifiers> &) -> Value * {
           Function *Callee = CB.getCalledFunction();
-          auto const Props = BI->analyzeBuiltin(*Callee).properties;
+          const auto Props = BI->analyzeBuiltin(*Callee).properties;
           if (Props & eBuiltinPropertyCanEmitInline) {
             IRBuilder<> B(&CB);
             const SmallVector<Value *, 4> Args(CB.args());
