@@ -83,6 +83,11 @@ HostInfo::HostInfo(host::arch arch, host::os os,
           "CA_HOST_DUMP_ASM requires non-deferred compilation";
       deferred_compilation_enabled = false;
     }
+    if (std::getenv("CA_HOST_EXTERNAL_ASSEMBLER")) {
+      deferred_compilation_warning =
+          "CA_HOST_EXTERNAL_ASSEMBLER requires non-deferred compilation";
+      deferred_compilation_enabled = false;
+    }    
   }
 #endif
 

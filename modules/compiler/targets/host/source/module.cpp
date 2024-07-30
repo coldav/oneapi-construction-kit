@@ -118,6 +118,62 @@ emitBinary(llvm::Module *module, llvm::TargetMachine *target_machine) {
     return cargo::make_unexpected(result);
   }
 
+  if (const char *assem = std::getenv("CA_HOST_EXTERNAL_ASSEMBLER")) {
+    llvm::SmallString<128> FileName;
+    llvm::SmallString<128> FileNameOut;
+    auto ErrorCode =
+        llvm::sys::fs::createTemporaryFile("ock_dump_asm", "s", FileName);
+    // TODO : Check return code
+    ErrorCode =
+        llvm::sys::fs::createTemporaryFile("ock_elf_file", "o", FileNameOut);
+    // TODO : Checl
+    llvm::raw_fd_ostream OutStream(FileName.str(), ErrorCode);
+    // todo: emit to the temporary file
+    auto result = compiler::emitCodeGenFile(*module, target_machine, OutStream,
+                                            /*create_assembly=*/true);
+    OutStream.close();
+    if (result != compiler::Result::SUCCESS) {
+      return cargo::make_unexpected(result);
+    }
+
+    std::string command = assem;
+    command += " " + FileName.str().str() + " " + FileNameOut.str().str();
+
+    if (FILE *fp = popen(command.c_str(), "r")) {
+      llvm::SmallVector<uint8_t, 128> Output;
+      char Str[1024];
+      while (fgets(Str, 1024, fp) != NULL) {
+        llvm::errs() << Str;
+      }
+      int ExitCode = pclose(fp);
+      if (ExitCode != 0) {
+        fprintf(stderr, "Error: External assembler failed '%d'\n", ExitCode);
+      }
+      FILE *f = fopen(FileNameOut.c_str(), "rb");
+      if (f) {
+        fseek(f, 0, SEEK_END);
+        auto len = ftell(f);
+        fseek(f, 0, SEEK_SET);
+        cargo::dynamic_array<uint8_t> binary;
+        if (binary.alloc(len)) {
+          return cargo::make_unexpected(compiler::Result::OUT_OF_MEMORY);
+        }
+        int read = fread(binary.data(), 1, len, f);
+        if (read != len) {
+          fprintf(stderr, "Failed to read '%d' bytes, read %d\n", (int)len,
+                  (int)read);
+        } else {
+          return {std::move(binary)};
+        }
+      } else {
+        fprintf(stderr, "Failed to open temporary file '%s'\n",
+                FileNameOut.c_str());
+      }
+    } else {
+      fprintf(stderr, "Failed to execute '%s'\n", command.c_str());
+    }
+  }
+
   cargo::dynamic_array<uint8_t> binary;
   if (binary.alloc(object_code_buffer.size())) {
     return cargo::make_unexpected(compiler::Result::OUT_OF_MEMORY);
