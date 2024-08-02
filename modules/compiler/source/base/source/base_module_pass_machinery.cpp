@@ -39,6 +39,7 @@
 #include <compiler/utils/encode_builtin_range_metadata_pass.h>
 #include <compiler/utils/encode_kernel_metadata_pass.h>
 #include <compiler/utils/fixup_calling_convention_pass.h>
+#include <compiler/utils/fix_abi_mux_builtins_pass.h>
 #include <compiler/utils/link_builtins_pass.h>
 #include <compiler/utils/lower_to_mux_builtins_pass.h>
 #include <compiler/utils/make_function_name_unique_pass.h>
