@@ -117,12 +117,15 @@ PreservedAnalyses compiler::utils::FixABIMuxBuiltinsPass::run(
     for (auto &Arg : CallArgs) {
       llvm::errs() << "***       Arg = " << *Arg << "\n";
     }
-    auto *Res = ir.CreateCall(NewFunc, CallArgs);
+    Value *Res = ir.CreateCall(NewFunc, CallArgs);
     if (SretParam) {
       // Store the return value
       ir.CreateStore(Res, SretParam);
       ir.CreateRetVoid();
     } else {
+      if (F->getReturnType() != RetType) {
+        Res = ir.CreateBitCast(Res, F->getReturnType());
+      }
       ir.CreateRet(Res);
     }
     Changed = true;
