@@ -27,69 +27,95 @@ PreservedAnalyses compiler::utils::FixABIMuxBuiltinsPass::run(
   bool Changed = false;
   auto &BI = AM.getResult<BuiltinInfoAnalysis>(M);
 
-  auto functionNeedsFixing = [&BI, &M](Function &F) {
-    if (F.getName().starts_with("__mux_sub_group") || F.getName().starts_with("__mux_work_group")) {
+  auto functionNeedsFixing = [&BI, &M](Function &F, bool &Vi2DoubleUpdate) {
+    if (F.getName().starts_with("__mux_sub_group") ||
+        F.getName().starts_with("__mux_work_group")) {
       for (auto &a : F.args()) {
         if (a.hasStructRetAttr() || a.hasByValAttr()) {
           return true;
+        }
+      }
+      if (F.getName().contains("_v2i32")) {
+        for (auto &a : F.args()) {
+          if (a.getType()->isDoubleTy()) {
+            Vi2DoubleUpdate = true;
+            return true;
+          }
         }
       }
     }
     return false;
   };
 
+  llvm::SmallVector<Function *, 4> FuncsToProcess;
   // Define all mux builtins
   for (auto &F : M.functions()) {
-    if (!functionNeedsFixing(F)) {
+    FuncsToProcess.push_back(&F);
+  }
+
+  for (auto *F : FuncsToProcess) {
+    bool Vi2DoubleUpdate = false;
+    if (!functionNeedsFixing(*F, Vi2DoubleUpdate)) {
       continue;
     }
-    // llvm::errs() << "  Fix ABI mux builtin: " << F.getName() << "\n";
-    if (!F.isDeclaration()) {
+    llvm::errs() << "**** CSD  Fix ABI mux builtin: " << *F << " : "
+                 << Vi2DoubleUpdate << "\n";
+    if (!F->isDeclaration()) {
       continue;
     }
-    std::string OrigName = F.getName().str();
-    F.setName(F.getName() + "_abi_wrapper");
+    IRBuilder<> ir(BasicBlock::Create(F->getContext(), "", F));
+
+    std::string OrigName = F->getName().str();
+    F->setName(F->getName() + "_abi_wrapper");
     // auto NumArgs =
-    //     F.arg_size();  // TODO: Calculate this correctly in case of sret
+    //     F->arg_size();  // TODO: Calculate this correctly in case of sret
     // Create declaration that we expect
     // continue;
     llvm::SmallVector<Type *, 8> Args;  //(NumArgs);
     llvm::Argument *SretParam = nullptr;
-    for (auto &Arg : F.args()) {
+    llvm::Type *RetType = F->getReturnType();
+    for (auto &Arg : F->args()) {
       if (Arg.hasStructRetAttr()) {
-        llvm::errs() << "**** CSD " << Arg.getName()  << " is sret\n";
-        SretParam = &Arg; 
+        llvm::errs() << "**** CSD " << Arg.getName() << " is sret\n";
+        SretParam = &Arg;
+        RetType = SretParam->getParamStructRetType();
         continue;
       }
       if (Arg.hasByValAttr()) {
         Args.push_back(Arg.getParamByValType());
+      } else if (Vi2DoubleUpdate && Arg.getType()->isDoubleTy()) {
+        // We know this should not be a double type, so output an int2
+        RetType = llvm::FixedVectorType::get(ir.getInt32Ty(), 2);
+        Args.push_back(RetType);
       } else {
         Args.push_back(Arg.getType());
       }
     }
-    llvm::Type *CalledFuncRetType = SretParam ? SretParam->getParamStructRetType() : F.getReturnType();
-    if (SretParam) {
-      llvm::errs() << "**** Need to do something about sret param" << *SretParam << "\n";
-    }
-    FunctionType *FT = FunctionType::get(CalledFuncRetType, Args, false);
-    Function *NewFunc =
-        Function::Create(FT, F.getLinkage(), OrigName, M);
-    (void) NewFunc;
-    IRBuilder<> ir(BasicBlock::Create(F.getContext(), "", &F));
+
+    FunctionType *FT = FunctionType::get(RetType, Args, false);
+    Function *NewFunc = Function::Create(FT, F->getLinkage(), OrigName, M);
+    (void)NewFunc;
     llvm::SmallVector<Value *, 8> CallArgs;
-    for (auto &Arg : F.args()) {
+    auto NewFuncArgItr = NewFunc->args().begin();
+    for (auto &Arg : F->args()) {
       if (Arg.hasByValAttr()) {
         Value *ArgLoad =
             ir.CreateLoad(Arg.getParamByValType(), &Arg);  //, Arg.getName());
         CallArgs.push_back(ArgLoad);
+      } else if (Vi2DoubleUpdate && Arg.getType()->isDoubleTy()) {
+        Value *ArgCast = ir.CreateBitCast(&Arg, (*NewFuncArgItr).getType());
+        /* Value * 	CreateBitCast (Value *V, Type *DestTy, const Twine
+         * &Name="")*/
+        CallArgs.push_back(ArgCast);
       } else {
         CallArgs.push_back(&Arg);
       }
+      NewFuncArgItr++;
     }
 
-    llvm::errs() << "*** NewFunc = " << *NewFunc <<"\n";
+    llvm::errs() << "*** NewFunc = " << *NewFunc << "\n";
     for (auto &Arg : CallArgs) {
-      llvm::errs() << "***       Arg = " << Arg <<"\n";
+      llvm::errs() << "***       Arg = " << *Arg << "\n";
     }
     auto *Res = ir.CreateCall(NewFunc, CallArgs);
     if (SretParam) {
