@@ -1,0 +1,39 @@
+name: cache_llvm
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/test_tornado.yml'
+  workflow_dispatch:
+
+jobs:
+
+  build_pr_ock:
+    runs-on: ubuntu-22.04
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      
+      # installs tools, ninja and installs llvm (default 17, RelAssert) and sets up cache
+      # - name: setup-ubuntu
+      #   uses:  ./.github/actions/setup_ubuntu_build
+      #   with:
+      #     save: true
+      #     llvm_version: 18
+      #     llvm_build_type: RelAssert
+
+      - name: icd_build
+        uses ./.github/actions/do_build_icd
+
+      # - name: tornado_build
+      #   uses ./.github/actions/do_build_tornado
+      #   with:
+      #     jdk: tbd
+      #     maven: tbd
+
+      # - name: build host x86_64 release
+      #   uses: ./.github/actions/do_build_ock
+      #   with:
+      #     build_type: Release
+      #     build_targets:
+
+  
