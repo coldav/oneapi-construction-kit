@@ -23,62 +23,63 @@
 #include <riscv/bakery.h>
 #include <riscv/module.h>
 #include <riscv/target.h>
+#include <llvm/TargetParser/Host.h>
 
 namespace {
-void addFeature(std::string &features, const char *feature, bool &hasFeature) {
-  features += hasFeature ? "," : "";
-  features += feature;
-  hasFeature = true;
-}
+// void addFeature(std::string &features, const char *feature, bool &hasFeature) {
+//   features += hasFeature ? "," : "";
+//   features += feature;
+//   hasFeature = true;
+// }
 
-void setTargetFeatureString(const riscv::hal_device_info_riscv_t *info,
-                            std::string &features) {
-  bool hasFeature = false;
-  if (info->extensions & riscv::rv_extension_M) {
-    addFeature(features, "+m", hasFeature);
-  }
-  if (info->extensions & riscv::rv_extension_F) {
-    addFeature(features, "+f", hasFeature);
-  }
-  if (info->extensions & riscv::rv_extension_A) {
-    addFeature(features, "+a", hasFeature);
-  }
-  if (info->extensions & riscv::rv_extension_C) {
-    addFeature(features, "+c", hasFeature);
-  }
-  if (info->extensions & riscv::rv_extension_D) {
-    addFeature(features, "+d", hasFeature);
-  }
-  if (info->extensions & riscv::rv_extension_E) {
-    addFeature(features, "+e", hasFeature);
-  }
+// void setTargetFeatureString(const riscv::hal_device_info_riscv_t *info,
+//                             std::string &features) {
+//   bool hasFeature = false;
+//   if (info->extensions & riscv::rv_extension_M) {
+//     addFeature(features, "+m", hasFeature);
+//   }
+//   if (info->extensions & riscv::rv_extension_F) {
+//     addFeature(features, "+f", hasFeature);
+//   }
+//   if (info->extensions & riscv::rv_extension_A) {
+//     addFeature(features, "+a", hasFeature);
+//   }
+//   if (info->extensions & riscv::rv_extension_C) {
+//     addFeature(features, "+c", hasFeature);
+//   }
+//   if (info->extensions & riscv::rv_extension_D) {
+//     addFeature(features, "+d", hasFeature);
+//   }
+//   if (info->extensions & riscv::rv_extension_E) {
+//     addFeature(features, "+e", hasFeature);
+//   }
 
-  if (info->extensions & riscv::rv_extension_V) {
-    addFeature(features, "+v", hasFeature);
-    if (info->vlen) {
-      const std::string zvl = "+zvl" + std::to_string(info->vlen) + "b";
-      addFeature(features, zvl.c_str(), hasFeature);
-    }
-  }
-  if (info->extensions & riscv::rv_extension_Zfh) {
-    addFeature(features, "+zfh", hasFeature);
-    if (info->extensions & riscv::rv_extension_V) {
-      addFeature(features, "+zvfh", hasFeature);
-    }
-  }
-  if (info->extensions & riscv::rv_extension_Zba) {
-    addFeature(features, "+zba", hasFeature);
-  }
-  if (info->extensions & riscv::rv_extension_Zbb) {
-    addFeature(features, "+zbb", hasFeature);
-  }
-  if (info->extensions & riscv::rv_extension_Zbc) {
-    addFeature(features, "+zbc", hasFeature);
-  }
-  if (info->extensions & riscv::rv_extension_Zbs) {
-    addFeature(features, "+zbs", hasFeature);
-  }
-}
+//   if (info->extensions & riscv::rv_extension_V) {
+//     addFeature(features, "+v", hasFeature);
+//     if (info->vlen) {
+//       const std::string zvl = "+zvl" + std::to_string(info->vlen) + "b";
+//       addFeature(features, zvl.c_str(), hasFeature);
+//     }
+//   }
+//   if (info->extensions & riscv::rv_extension_Zfh) {
+//     addFeature(features, "+zfh", hasFeature);
+//     if (info->extensions & riscv::rv_extension_V) {
+//       addFeature(features, "+zvfh", hasFeature);
+//     }
+//   }
+//   if (info->extensions & riscv::rv_extension_Zba) {
+//     addFeature(features, "+zba", hasFeature);
+//   }
+//   if (info->extensions & riscv::rv_extension_Zbb) {
+//     addFeature(features, "+zbb", hasFeature);
+//   }
+//   if (info->extensions & riscv::rv_extension_Zbc) {
+//     addFeature(features, "+zbc", hasFeature);
+//   }
+//   if (info->extensions & riscv::rv_extension_Zbs) {
+//     addFeature(features, "+zbs", hasFeature);
+//   }
+// }
 
 }  // namespace
 
@@ -94,28 +95,28 @@ RiscvTarget::RiscvTarget(const compiler::Info *compiler_info,
   static std::once_flag llvm_initialized;
   std::call_once(llvm_initialized, [&]() {
     // Init llvm targets.
-    LLVMInitializeRISCVTarget();
-    LLVMInitializeRISCVTargetInfo();
-    LLVMInitializeRISCVAsmPrinter();
-    LLVMInitializeRISCVTargetMC();
-    LLVMInitializeRISCVAsmParser();
+    LLVMInitializeX86Target();
+    LLVMInitializeX86TargetInfo();
+    LLVMInitializeX86AsmPrinter();
+    LLVMInitializeX86TargetMC();
+    LLVMInitializeX86AsmParser();
   });
 
   riscv_hal_device_info = hal_device_info;
 
-  setTargetFeatureString(riscv_hal_device_info, llvm_features);
+  // setTargetFeatureString(riscv_hal_device_info, llvm_features);
 
-  if (riscv_hal_device_info->word_size == 32) {
-    llvm_triple = "riscv32-unknown-elf";
-    llvm_cpu = "generic-rv32";
-    llvm_abi = "ilp32d";
-  } else {
-    llvm_triple = "riscv64-unknown-elf";
-    llvm_cpu = "generic-rv64";
-    llvm_abi = "lp64d";
-  }
-  assert(riscv_hal_device_info->supports_doubles &&
-         "ABI support only for RISC-V with double support");
+  // if (riscv_hal_device_info->word_size == 32) {
+  //   llvm_triple = "riscv32-unknown-elf";
+  //   llvm_cpu = "generic-rv32";
+  //   llvm_abi = "ilp32d";
+  // } else {
+    llvm_triple = "x86_64-unknown-unknown-elf";
+    llvm_cpu = llvm::sys::getHostCPUName().str();
+    llvm_abi = "";
+  // }
+  // assert(riscv_hal_device_info->supports_doubles &&
+  //        "ABI support only for RISC-V with double support");
 }
 
 RiscvTarget::~RiscvTarget() {}
