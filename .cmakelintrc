@@ -1,1 +1,0 @@
-filter=-linelength,-syntax,-convention/filename,-package/consistency,-package/stdargs

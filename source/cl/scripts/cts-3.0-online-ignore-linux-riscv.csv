@@ -1,4 +1,0 @@
-OpenCL-GL Sharing,gl/test_gl
-Thread Dimensions,thread_dimensions/test_thread_dimensions quick*
-Select,select/test_select
-Math,math_brute_force/test_bruteforce -w

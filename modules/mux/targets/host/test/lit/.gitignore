@@ -1,4 +1,0 @@
-# lit creates a folder called 'Output'
-# holding temporary files generated from
-# tests using the '%t' substitution.
-Output
