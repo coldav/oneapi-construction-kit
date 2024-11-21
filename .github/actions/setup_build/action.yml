@@ -11,6 +11,9 @@ inputs:
   llvm_version:
     description: 'Major llvm version to use for fetching llvm cache e.g. 18'
     default: 18
+  llvm_cross_arch:
+    description: 'architecture for cross llvm (default "")'
+    default: ""
   ubuntu_version:
     description: 'Version of ubuntu used for cache retrieval and prerequisites'
     default: 22.04
@@ -20,7 +23,7 @@ inputs:
   save:
     description: 'Save the build cache at the end - not for PR testing'
     default: false
-  cross_arch:
+  cross_llvm_arch:
     description: 'Cross compilation architecture from: x86, arm, aarch64, riscv64. Default: "" (no cross compile)'
     default: ""
     # Note: runner architectures from: x86_64 (aka runner.arch: X64), aarch64 (aka runner.arch: ARM64)
@@ -98,6 +101,20 @@ runs:
       with:
         path: llvm_install/**
         key: llvm-${{ inputs.os }}-${{ steps.set_llvm_key.outputs.key_version }}-${{ steps.set_llvm_key.outputs.key_arch }}-v${{ inputs.llvm_version }}-${{ inputs.llvm_build_type }}
+        fail-on-cache-miss: true
+
+    - name: move native llvm if cross set
+      shell: bash
+      if: $ {{ inputs.cross_llvm_arch  != '' }}
+      run: |
+         mv llvm_install llvm_install_native
+
+    - name: fetch cross llvm if cross set
+      uses: actions/cache/restore@v4
+      if: $ {{ inputs.cross_llvm_arch  != '' }}
+      with:
+        path: llvm_install/**
+        key: llvm-${{ inputs.os }}-${{ steps.set_llvm_key.outputs.key_version }}-${{ inputs.cross_llvm_arch }}-v${{ inputs.llvm_version }}-${{ inputs.llvm_build_type }}
         fail-on-cache-miss: true
 
       # note the PR testing usage should set 'save' to false, to avoid PR testing creating new caches on a branch
