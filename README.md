@@ -13,7 +13,7 @@ implementation in oneAPI Construction Kit.
 The design documents are stored in the `rfcs` directory.
 
 - Each RFC is stored in a separate subdirectory
-  `rfcs/<YYYMMDD>-descriptive-but-short-name`.
+  `rfcs/<YYYYMMDD>-descriptive-but-short-name`.
 
   - There must be a `README.md` file that contains the main RFC itself.
 
@@ -53,6 +53,6 @@ The RFC life-cycle is:
    continuously update the design until all the issues are resolved.
 
 4. To accept the RFC, at least two approvals from oneAPI Construction Kit
-   maintainers are required or one one approval if the RFC is by a maintainer.
+   maintainers are required or one approval if the RFC is by a maintainer.
    Once general consensus is reached and the approvals are in place, the RFC is
    merged to the branch.
