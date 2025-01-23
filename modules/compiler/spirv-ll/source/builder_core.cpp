@@ -2556,9 +2556,23 @@ llvm::Error Builder::create<OpVariable>(const OpVariable *op) {
     // StorageClass, this should be handled by the Input StorageClass below.
     if (module.getFirstDecoration(op->IdResult(), spv::DecorationBuiltIn)) {
       module.addBuiltInID(op->IdResult());
+      llvm::errs() << "CSD " << __LINE__ << " new variable " << name << "\n";
+   //   std::optional< unsigned > AddressSpace=std::nullopt;
+      auto addrSpaceOrError =
+          module.translateStorageClassToAddrSpace(op->StorageClass());
+      if (auto err = addrSpaceOrError.takeError()) {
+        return err;
+      }
+
+      /* GlobalVariable (Module &M, Type *Ty, bool isConstant, LinkageTypes Linkage, Constant *Initializer, const Twine &Name="",
+       GlobalVariable *InsertBefore=nullptr, ThreadLocalMode=NotThreadLocal,
+        std::optional< unsigned > AddressSpace=std::nullopt, bool isExternallyInitialized=false)*/
+    //  if (name.find("spirv_BuiltIn") != std::string::npos) {
+    //     AddressSpace = 1;
+    //  }
       value = new llvm::GlobalVariable(*module.llvmModule, varTy, false,
                                        llvm::GlobalValue::ExternalLinkage,
-                                       llvm::UndefValue::get(varTy), name);
+                                       llvm::UndefValue::get(varTy), name, nullptr, llvm::GlobalValue::NotThreadLocal, addrSpaceOrError.get());
     } else {
       // Following is the set of StorageClasses supported by the Kernel
       // capability.
@@ -4021,6 +4035,7 @@ llvm::Error Builder::create<OpBitcast>(const OpBitcast *op) {
   if (llvm::isa<llvm::PointerType>(value->getType()) &&
       llvm::isa<llvm::PointerType>(type) &&
       value->getType()->getPointerAddressSpace() != type->getPointerAddressSpace()) {
+    llvm::errs() << "CSD OpBitCast " << *value << " : " << *type << "\n";
     // We need to do an addrspacecast first as the address spaces are
     // different. Create actual instructions as
     // spirv_ll::Builder::replaceBuiltinGlobals() make assumptions about the

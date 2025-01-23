@@ -335,8 +335,9 @@ void spirv_ll::Builder::generateBuiltinInitBlock(spv::BuiltIn builtin,
     default:
       SPIRV_LL_ABORT("BuiltIn unknown");
   }
-} 
+}
 
+#if 1
 bool spirv_ll::Builder::replaceBuiltinUsesWithCalls(
     llvm::GlobalVariable *builtinGlobal, spv::BuiltIn kind) {
   llvm::SmallVector<llvm::User *, 4> Deletes;
@@ -345,7 +346,6 @@ bool spirv_ll::Builder::replaceBuiltinUsesWithCalls(
 
   while (!Worklist.empty()) {
     auto *UI = Worklist.pop_back_val();
-    llvm::errs() << "CSD builtinGlobal " << builtinGlobal->getName() << " user : " << *UI << "\n";
 
     // We may have addrspacecast constant expressions
     if (auto *CE = dyn_cast<llvm::ConstantExpr>(UI)) {
@@ -484,7 +484,179 @@ bool spirv_ll::Builder::replaceBuiltinUsesWithCalls(
   builtinGlobal->eraseFromParent();
   return true;
 }
+#else
+bool spirv_ll::Builder::replaceBuiltinUsesWithCalls(
+    llvm::GlobalVariable *builtinGlobal, spv::BuiltIn kind) {
+  llvm::SmallVector<llvm::User *, 4> Deletes;
+  llvm::SmallVector<llvm::User *, 4> Uses;
+  llvm::SmallVector<llvm::User *, 4> Worklist(builtinGlobal->users());
 
+  while (!Worklist.empty()) {
+    auto *UI = Worklist.pop_back_val();
+    llvm::errs() << "CSD builtinGlobal " << builtinGlobal->getName() << " user : " << *UI << "\n";
+    if (builtinGlobal->getName() == "__spirv_BuiltInLocalInvocationId") {
+      llvm::errs() << "CSD AHA __spirv_BuiltInLocalInvocationId";
+    }
+
+    // We may have addrspacecast constant expressions
+    if (auto *CE = dyn_cast<llvm::ConstantExpr>(UI)) {
+      if (CE->getOpcode() != llvm::Instruction::AddrSpaceCast) {
+        // If we have a different kind of constant expression something funky is
+        // going on and we should stick to the relative safety of an init block
+        // for this one.
+        return false;
+      }
+      Deletes.push_back(CE);
+      Worklist.append(CE->user_begin(), CE->user_end());
+      continue;
+    }
+
+    if (auto *const ASCast = dyn_cast<llvm::AddrSpaceCastInst>(UI)) {
+      Deletes.push_back(ASCast);
+      Worklist.append(ASCast->user_begin(), ASCast->user_end());
+      continue;
+    }
+
+    if (llvm::isa<llvm::LoadInst>(UI)) {
+      Deletes.push_back(UI);
+      llvm::errs() << "CSD UI type is " << *UI->getType() << " Builtin type " << *builtinGlobal->getValueType() << "\n";
+//      if (true || !builtinGlobal->getValueType()->isVectorTy()) {
+      if (!UI->getType()->isVectorTy()) {
+        Uses.push_back(UI);
+        continue;
+      }
+      for (auto *const LDUI : UI->users()) {
+        // If we find that this module is trying to use a builtin variable as a
+        // vector (i.e. not just extracting one element at a time after loading)
+        // we can't replace all its uses with calls to the builtin function.
+        // if (!isa<llvm::ExtractElementInst>(LDUI)) {
+        //   return false;
+        // }
+        Uses.push_back(LDUI);
+        Deletes.push_back(LDUI);
+      }
+      continue;
+    }
+
+    if (llvm::isa<llvm::GetElementPtrInst>(UI)) {
+      Deletes.push_back(UI);
+      for (auto *const GEPUI : UI->users()) {
+        // Again, if this access isn't a simple GEP->load scenario give up on
+        // this optimization.
+        if (!llvm::isa<llvm::LoadInst>(GEPUI)) {
+          return false;
+        }
+        Uses.push_back(GEPUI);
+        Deletes.push_back(GEPUI);
+      }
+      continue;
+    }
+
+    // If we have neither of the above cases something funky is going on and
+    // we should stick to the relative safety of an init block for this one.
+    return false;
+  }
+
+  // If we've gotten this far we can replace all uses of this builtin global
+  // with work item function calls, so get the name and type of the function.
+  const llvm::StringRef builtinName = getBuiltinName(kind);
+  llvm::errs() << "CSD builtinName = " << builtinName << "\n";
+  llvm::Type *funcRetTy = nullptr;
+  // get_work_dim and sub-group builtins return a uint, all the other work item
+  // functions return size_t
+  const bool isSubGroupBuiltin =
+      (spv::BuiltInSubgroupSize <= kind &&
+       kind <= spv::BuiltInSubgroupLocalInvocationId);
+  if (kind == spv::BuiltInWorkDim || isSubGroupBuiltin) {
+    funcRetTy = IRBuilder.getInt32Ty();
+  } else {
+    auto dataLayout = module.llvmModule->getDataLayout();
+    if (32 == dataLayout.getPointerSizeInBits()) {
+      funcRetTy = IRBuilder.getInt32Ty();
+    } else {
+      SPIRV_LL_ASSERT(64 == dataLayout.getPointerSizeInBits(),
+                      "Datalayout is neither 32 nor 64 bits");
+      funcRetTy = IRBuilder.getInt64Ty();
+    }
+  }
+
+  for (auto &use : Uses) {
+    llvm::errs() << "CSD use = " << *use << "\n";
+
+    llvm::SmallVector<llvm::Value *, 1> arg;
+    llvm::Value *index = nullptr;
+    llvm::Instruction *useInst = llvm::cast<llvm::Instruction>(use);
+    if (auto *EEI = dyn_cast<llvm::ExtractElementInst>(use)) {
+      index = EEI->getIndexOperand();
+    } else if (auto *LDI = dyn_cast<llvm::LoadInst>(use)) {
+      // In the case of a GEP->load the dim arg to our work item function is
+      // the last index provided to the GEP instruction. If we aren't loading
+      // a GEP then this must be a call to get_work_dim() - so there is no arg.
+      llvm::errs() << "CSD LoadInst ptr op is " << *(LDI->getPointerOperand()) << "\n";
+      if (auto *GEP =
+              dyn_cast<llvm::GetElementPtrInst>(LDI->getPointerOperand())) {
+        index = *(GEP->idx_end() - 1);
+        // Check if gep is based off a different size e.g. i8 and if so divide by the builtin element size
+        if ()
+      } else if (kind != spv::BuiltInWorkDim && kind != spv::BuiltInGlobalLinearId && kind != spv::BuiltInGlobalLinearId && kind != spv::BuiltInSubgroupSize ) {
+        // TODO: More than this - put in a table?
+        // TODO: Check this is okay
+        index = IRBuilder.getInt32(0);
+      }
+    }
+
+    if (index) {
+      // Make sure our index is a 32 bit integer to match the work item function
+      // signatures.
+      if (index->getType()->getScalarSizeInBits() != 32) {
+        auto *cast = llvm::CastInst::CreateIntegerCast(
+            index, IRBuilder.getInt32Ty(), false);
+        cast->insertBefore(useInst->getIterator());
+        index = cast;
+      }
+      llvm::errs() << "CSD pushed back index = " << *index << "\n";
+      arg.push_back(index);
+    }/* else {
+      // CSD temp - check
+      index = IRBuilder.getInt32(0);
+      arg.push_back(index);      
+    }*/
+    llvm::errs() << "CSD funcRetTy = " << *funcRetTy << " trying (";
+    for (auto &a : arg) {
+      llvm::errs() << *a << ",";
+    }
+    llvm::errs() << "\n";
+    IRBuilder.SetInsertPoint(useInst);
+    auto workItemCall = llvm::cast<llvm::Instruction>(
+        createBuiltinCall(builtinName, funcRetTy, arg));
+    // Cast the function call to the correct type for the use if necessary. This
+    // is needed for VK modules sometimes because the GLSL builtin variables are
+    // vectors of 32 bit ints whereas the CL work item functions return size_t.
+    if (use->getType() != workItemCall->getType()) {
+      auto *cast = llvm::CastInst::CreateIntegerCast(workItemCall,
+                                                     use->getType(), false);
+      cast->insertBefore(useInst->getIterator());
+      workItemCall = cast;
+    }
+    workItemCall->takeName(useInst);
+    useInst->replaceAllUsesWith(workItemCall);
+  }
+
+  while (!Deletes.empty()) {
+    auto *UI = Deletes.pop_back_val();
+    if (auto *const CE = llvm::dyn_cast<llvm::ConstantExpr>(UI)) {
+      assert(CE->use_empty());
+      CE->destroyConstant();
+    } else {
+      assert(UI->use_empty());
+      llvm::cast<llvm::Instruction>(UI)->eraseFromParent();
+    }
+  }
+
+  builtinGlobal->eraseFromParent();
+  return true;
+}
+#endif
 void spirv_ll::Builder::replaceBuiltinGlobals() {
   for (const auto &ID : module.getBuiltInVarIDs()) {
     llvm::GlobalVariable *builtin_global =
@@ -643,6 +815,11 @@ llvm::CallInst *spirv_ll::Builder::createBuiltinCall(
       }) != BuiltinFnNames.end()) {
     function->setOnlyReadsMemory();
   }
+  llvm::errs() << "CSD Calling func " << * function << " args : ";
+    for (auto &a : args) {
+      llvm::errs() << *a << ",";
+    }
+    llvm::errs() << "\n";  
   auto *const call = IRBuilder.CreateCall(function, args);
   if (name != SAMPLER_INIT_FN) {
     call->setCallingConv(llvm::CallingConv::SPIR_FUNC);

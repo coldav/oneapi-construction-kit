@@ -42,9 +42,9 @@
           OpDecorate %__spirv_BuiltInGlobalInvocationId Alignment 32
 
 
-          OpName %_useLocalInvocationId "_useLocalInvocationId"     
-          OpName %_useGlobalInvocationId "_useGlobalInvocationId"               
-
+;          OpName %_useLocalInvocationId "_useLocalInvocationId"     
+;          OpName %_useGlobalInvocationId "_useGlobalInvocationId"               
+;
 %ulong = OpTypeInt 64 0
 %ulong_16 = OpConstant %ulong 16
 %uchar = OpTypeInt 8 0
