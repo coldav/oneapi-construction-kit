@@ -1009,13 +1009,14 @@ cl_int _cl_program::setOptions(cargo::array_view<const cl_device_id> devices,
             cargo::trim(cargo::join(options.begin(), options.end(), " ")));
       };
       const char *extraCompileOpts = "CA_EXTRA_COMPILE_OPTS";
+      (void) extraCompileOpts;
       const char *extraLinkOpts = "CA_EXTRA_LINK_OPTS";
       switch (mode) {
         case compiler::Options::Mode::BUILD:
-          return join({options, std::getenv(extraCompileOpts),
+          return join({options,  "-cl-wfv=never"/*std::getenv(extraCompileOpts)*/,
                        std::getenv(extraLinkOpts)});
         case compiler::Options::Mode::COMPILE:
-          return join({options, std::getenv(extraCompileOpts)});
+          return join({options, "-cl-wfv=never"/*std::getenv(extraCompileOpts)*/});
         case compiler::Options::Mode::LINK:
           return join({options, std::getenv(extraLinkOpts)});
       }
