@@ -257,17 +257,21 @@ llvm::ModulePassManager HostPassMachinery::getKernelFinalizationPasses(
   WIOpts.IsDebug = options.opt_disable;
 
   PM.addPass(compiler::utils::WorkItemLoopsPass(WIOpts));
-  PM.addPass(llvm::AlwaysInlinerPass());
-  PM.addPass(compiler::utils::SimpleCallbackPass([](llvm::Module &m) {
-    if (getenv("DUMP_AFTER_WI_LOOP") && *getenv("DUMP_AFTER_WI_LOOP") == '1') {
-      llvm::errs() << "DUMP AFTER WI LOOP:::\n" << m << "-----------\n\n";
-    }
-  }));
+
   // Verify that any required sub-group size was met.
   PM.addPass(compiler::utils::VerifyReqdSubGroupSizeSatisfiedPass());
 
   PM.addPass(compiler::utils::AddSchedulingParametersPass());
 
+  // Define mux builtins now, since AddEntryHookPass introduces more
+  PM.addPass(compiler::utils::DefineMuxBuiltinsPass());
+
+  PM.addPass(llvm::AlwaysInlinerPass());
+  PM.addPass(compiler::utils::SimpleCallbackPass([](llvm::Module &m) {
+    if (getenv("CA_DUMP_AFTER_SCHED_PARAM") && *getenv("CA_DUMP_AFTER_SCHED_PARAM") == '1') {
+      llvm::errs() << "DUMP AFTER WI LOOP:::\n" << m << "-----------\n\n";
+    }
+  }));
   // With scheduling parameters added, add our work-group loops
   PM.addPass(AddEntryHookPass());
   // Define mux builtins now, since AddEntryHookPass introduces more
