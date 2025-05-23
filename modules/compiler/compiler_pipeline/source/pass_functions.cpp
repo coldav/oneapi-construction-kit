@@ -488,8 +488,8 @@ void remapClonedCallsites(llvm::Function &oldFunc, llvm::Function &newFunc,
 
 llvm::BasicBlock *createLoop(llvm::BasicBlock *entry, llvm::BasicBlock *exit,
                              llvm::Value *indexStart, llvm::Value *indexEnd,
-                             const CreateLoopOpts &opts,
-                             CreateLoopBodyFn body) {
+                             const CreateLoopOpts &opts, CreateLoopBodyFn body,
+                             llvm::MDNode *attachMetadata) {
   // If the index increment is null, we default to 1 as our index.
   auto indexInc = opts.indexInc
                       ? opts.indexInc
@@ -558,7 +558,9 @@ llvm::BasicBlock *createLoop(llvm::BasicBlock *entry, llvm::BasicBlock *exit,
   // last, branch condition either to the exit, or for another loop iteration
   auto *const termBR = bodyIR.CreateCondBr(bodyIR.CreateICmpULT(add, indexEnd),
                                            loopIR.GetInsertBlock(), exit);
-
+  if (attachMetadata) {
+    termBR->setMetadata("llvm.loop", attachMetadata);
+  }
   if (opts.disableVectorize) {
     auto *const vecDisable = llvm::MDNode::get(
         ctx, {llvm::MDString::get(ctx, "llvm.loop.vectorize.enable"),

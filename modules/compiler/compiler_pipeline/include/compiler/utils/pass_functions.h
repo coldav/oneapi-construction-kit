@@ -205,6 +205,7 @@ struct CreateLoopOpts {
 /// @param indexEnd The end index (we compare for <)
 /// @param opts Set of options configuring the generation of this loop.
 /// @param body Body of code to insert into loop.
+/// @param attachMetadata Metadata to attach to loop.
 ///
 /// The parameters of this function are as follows: the loop body BasicBlock;
 /// the Value corresponding to the IV beginning at `indexStart` and incremented
@@ -219,7 +220,8 @@ struct CreateLoopOpts {
 /// @return llvm::BasicBlock* The exit block
 llvm::BasicBlock *createLoop(llvm::BasicBlock *entry, llvm::BasicBlock *exit,
                              llvm::Value *indexStart, llvm::Value *indexEnd,
-                             const CreateLoopOpts &opts, CreateLoopBodyFn body);
+                             const CreateLoopOpts &opts, CreateLoopBodyFn body,
+                             llvm::MDNode *attachMetadata = nullptr);
 
 /// @brief Get the last argument of a function.
 ///

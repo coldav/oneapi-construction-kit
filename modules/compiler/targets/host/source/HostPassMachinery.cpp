@@ -258,6 +258,14 @@ llvm::ModulePassManager HostPassMachinery::getKernelFinalizationPasses(
 
   PM.addPass(compiler::utils::WorkItemLoopsPass(WIOpts));
 
+  PM.addPass(llvm::AlwaysInlinerPass());
+  PM.addPass(compiler::utils::SimpleCallbackPass([](llvm::Module &m) {
+    if (getenv("CA_DUMP_AFTER_WI_LOOPS") &&
+        *getenv("CA_DUMP_AFTER_WI_LOOPS") == '1') {
+      llvm::errs() << "DUMP AFTER CA_DUMP_AFTER_WI_LOOPS:::\n"
+                   << m << "-----------\n\n";
+    }
+  }));
   // Verify that any required sub-group size was met.
   PM.addPass(compiler::utils::VerifyReqdSubGroupSizeSatisfiedPass());
 

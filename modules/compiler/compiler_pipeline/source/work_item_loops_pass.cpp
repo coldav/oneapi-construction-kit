@@ -23,9 +23,12 @@
 #include <compiler/utils/sub_group_analysis.h>
 #include <compiler/utils/vectorization_factor.h>
 #include <compiler/utils/work_item_loops_pass.h>
+#include <llvm/ADT/SmallSet.h>
+#include <llvm/IR/CFG.h>
 #include <llvm/IR/DIBuilder.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/Module.h>
+#include <llvm/Transforms/Utils/Cloning.h>
 #include <llvm/Transforms/Utils/Local.h>
 #include <multi_llvm/multi_llvm.h>
 
@@ -261,7 +264,7 @@ struct ScheduleGenerator {
       const compiler::utils::BarrierWithLiveVars &barrier, IRBuilder<> &ir,
       BasicBlock *block, unsigned i, Value *dim_0, Value *dim_1, Value *dim_2,
       Value *accumulator = nullptr, Value *VF = nullptr,
-      Value *offset = nullptr) {
+      Value *offset = nullptr, CallInst **callableInline = nullptr) {
     auto new_kernel_args = args;
     if (accumulator) {
       new_kernel_args.push_back(accumulator);
@@ -317,6 +320,8 @@ struct ScheduleGenerator {
     const auto &successors = barrier.getSuccessorIds(i);
     if (successors.size() > 1) {
       ir.CreateStore(ci, nextID);
+    } else if (callableInline) {
+      *callableInline = ci;
     }
   }
 
@@ -412,6 +417,19 @@ struct ScheduleGenerator {
                                                            barrier0);
     for (auto &value : values) {
       value = live_values.getReload(value, ir, "_load", true);
+    }
+  }
+
+  void findBasicBlocksInWILoop(
+      llvm::BasicBlock *block, llvm::BasicBlock *exitBlock,
+      llvm::SmallSet<llvm::BasicBlock *, 4> &basicBlocksInLoop) {
+    if (basicBlocksInLoop.contains(block)) {
+      return;
+    } else if (block != exitBlock) {
+      basicBlocksInLoop.insert(block);
+      for (auto *successor : llvm::successors(block)) {
+        findBasicBlocksInWILoop(successor, exitBlock, basicBlocksInLoop);
+      }
     }
   }
 
@@ -595,9 +613,23 @@ struct ScheduleGenerator {
     return {block, nullptr, std::nullopt};
   }
 
+#if 0
+      if (inlineCall) {
+        llvm::errs() << "Inlining call from " << *ci <<  "  to " << subkernel << "\n";
+        llvm::InlineFunctionInfo IFI;
+        auto inlineResult =
+            llvm::InlineFunction(*ci, IFI, /*MergeAttributes*/ false,
+                          /*CalleeAAR*/ nullptr, /*InsertLifetime*/ true,
+                          /*ForwardVarArgsTo*/ nullptr);
+        if (inlineResult.isSuccess()) {
+          llvm::errs() << "Inlining call succeeded!\n";
+        }
+      }
+#endif
   // Create loops to execute all the main work items, and then all the
   // left-over tail work items at the end.
-  BasicBlock *makeWorkItemLoops(BasicBlock *block, unsigned barrierID) {
+  BasicBlock *makeWorkItemLoops(BasicBlock *block, unsigned barrierID,
+                                llvm::CallInst **callInline = nullptr) {
     Value *accum = nullptr;
     std::optional<compiler::utils::GroupCollective> collective;
     std::tie(block, accum, collective) =
@@ -666,6 +698,19 @@ struct ScheduleGenerator {
         outer_opts.IVs = {i32Zero};
       }
 
+      // create parallel metadata
+      // llvm::Function &block_func = *block->getParent();
+      LLVMContext &context = block->getParent()->getParent()->getContext();
+      SmallVector<Metadata *, 3> Args(1, nullptr);
+      MDNode *accessGroupNode = MDNode::getDistinct(context, {});
+      MDNode *parallelLoopAccessNode = MDNode::get(
+          context, {MDString::get(context, "llvm.loop.parallel_accesses"),
+                    accessGroupNode});
+      Args.push_back(parallelLoopAccessNode);
+      MDNode *loopBranchMetadata = MDNode::getDistinct(context, Args);
+      loopBranchMetadata->replaceOperandWith(0, loopBranchMetadata);
+
+      BasicBlock *exit0 = nullptr;
       // looping through num groups in the third (outermost) dimension
       mainExitBB = compiler::utils::createLoop(
           mainPreheaderBB, mainExitBB, zero, localSizeDim[workItemDim2],
@@ -701,7 +746,7 @@ struct ScheduleGenerator {
                   inner_opts.indexInc = VF;
                   inner_opts.IVs = ivs1.vec();
 
-                  BasicBlock *exit0 = compiler::utils::createLoop(
+                  exit0 = compiler::utils::createLoop(
                       block, nullptr, zero, mainLoopLimit, inner_opts,
                       [&](BasicBlock *block, Value *dim_0,
                           ArrayRef<Value *> ivs0,
@@ -717,7 +762,8 @@ struct ScheduleGenerator {
 
                         createWorkItemLoopBody(barrierMain, ir, block,
                                                barrierID, dim_0, dim_1, dim_2,
-                                               accum, VF);
+                                               accum, VF,
+                                               /*offset=*/nullptr, callInline);
 
                         if (!noExplicitSubgroups) {
                           nextSubgroupIV =
@@ -726,7 +772,8 @@ struct ScheduleGenerator {
                         }
 
                         return block;
-                      });
+                      },
+                      loopBranchMetadata);
 
                   if (!noExplicitSubgroups) {
                     // Don't forget to update the subgroup IV phi.
@@ -1767,6 +1814,63 @@ Function *compiler::utils::WorkItemLoopsPass::makeWrapperFunction(
     barrierTail->getFunc().setLinkage(Function::InternalLinkage);
   }
 
+  llvm::BasicBlock *innerLoopEntry = nullptr;
+  llvm::BasicBlock *innerLoopExit = nullptr;
+  // TODO: We need a better way than just checking names
+  for (auto &block : *new_wrapper) {
+    llvm::errs() << "___CSD___ new wrapper " << block.getName() << "\n";
+    if (block.getName() == "loopIR3") {
+      innerLoopEntry = &block;
+    } else if (block.getName() == "exitIR") {
+      innerLoopExit = &block;
+    }
+    if (auto *branch =
+            llvm::dyn_cast<llvm::BranchInst>(block.getTerminator())) {
+      MDNode *node = branch->getMetadata("llvm.loop");
+      if (node) {
+        llvm::errs() << "DUMPIT " << *(mainF.getParent());
+        llvm::errs() << "Terminator node is " << *node << "\n";
+      }
+    }
+  }
+  (void)innerLoopEntry;
+  (void)innerLoopExit;
+  // if (innerLoopEntry && innerLoopExit) {
+  //   for (auto &ins : *innerLoopEntry) {
+  //     if (auto *ci = dyn_cast<llvm::CallInst>(&ins)) {
+  //       llvm::errs() << "Inlining call from " << *ci << "\n";
+  //       llvm::InlineFunctionInfo IFI;
+  //       auto inlineResult =
+  //           llvm::InlineFunction(*ci, IFI, /*MergeAttributes*/ false,
+  //                                /*CalleeAAR*/ nullptr, /*InsertLifetime*/
+  //                                true,
+  //                                /*ForwardVarArgsTo*/ nullptr);
+  //       if (inlineResult.isSuccess()) {
+  //         llvm::errs() << "Inlining call succeeded!\n";
+  //         // hack attempt to add access metadata to memory instructions
+  //         llvm::SmallSet<llvm::BasicBlock *, 4> basicBlocksInLoop;
+
+  //         // findBasicBlocksInWILoop(innerLoopEntry, innerLoopExit,
+  //         //                         basicBlocksInLoop);
+  //         // for (auto *block : basicBlocksInLoop) {
+  //           llvm::errs() << "___CSD__ Processing block " << block->getName()
+  //                        << "\n";
+  //           for (auto &ins : *block) {
+  //             if (ins.mayReadOrWriteMemory()) {
+  //               // MDNode *newNode = MDNode::get(context, accessGroupNode);
+  //               // MDNode *oldNode = ins.getMetadata("llvm.access.group");
+  //               // if (oldNode != nullptr) {
+  //               //   newNode = llvm::MDNode::concatenate(oldNode, newNode);
+  //               // }
+  //               // ins.setMetadata("llvm.access.group", newNode);
+  //             }
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
+  llvm::errs() << *new_wrapper;
   return new_wrapper;
 }
 
@@ -1784,6 +1888,10 @@ struct BarrierWrapperInfo {
 
 PreservedAnalyses compiler::utils::WorkItemLoopsPass::run(
     Module &M, ModuleAnalysisManager &MAM) {
+  if (getenv("DUMP_PRE_WI_LOOPS") && *getenv("DUMP_PRE_WI_LOOPS") == '1') {
+    llvm::errs() << M;
+  }
+
   // Cache the functions we're interested in as this pass introduces new ones
   // which we don't want to run over.
   SmallVector<BarrierWrapperInfo, 4> MainTailPairs;
@@ -1935,5 +2043,8 @@ PreservedAnalyses compiler::utils::WorkItemLoopsPass::run(
     }
   }
 
+  if (getenv("DUMP_POST_WI_LOOPS") && *getenv("DUMP_POST_WI_LOOPS") == '1') {
+    llvm::errs() << M;
+  }
   return PreservedAnalyses::none();
 }
