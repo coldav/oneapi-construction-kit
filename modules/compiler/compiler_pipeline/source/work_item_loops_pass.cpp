@@ -1827,9 +1827,30 @@ Function *compiler::utils::WorkItemLoopsPass::makeWrapperFunction(
     if (auto *branch =
             llvm::dyn_cast<llvm::BranchInst>(block.getTerminator())) {
       MDNode *node = branch->getMetadata("llvm.loop");
-      if (node) {
-        llvm::errs() << "DUMPIT " << *(mainF.getParent());
-        llvm::errs() << "Terminator node is " << *node << "\n";
+      if (node && node->getNumOperands() >= 2) {
+        // Iterate over the metdata node operands and look for MDString metadata.
+        for (const MDOperand &MDO : llvm::drop_begin(node->operands())) {
+          MDNode *MD = dyn_cast<MDNode>(MDO);
+          if (!MD || MD->getNumOperands() < 1)
+            continue;
+          MDString *S = dyn_cast<MDString>(MD->getOperand(0));
+        if (!S)
+          continue;
+        // Return the operand node if MDString holds expected metadata.
+        if (Name == S->getString())
+          return MD;
+  }
+
+  // Loop property not found.
+  return nullptr;
+}        
+        const llvm::MDOperand &Operand = node->getOperand(1);
+        llvm::Metadata *metadata = Operand.get();
+        llvm::errs() << "___CSD__ " << *metadata << "\n";
+
+
+        // llvm::errs() << "DUMPIT " << *(mainF.getParent());
+        // llvm::errs() << "Terminator node is " << *node << "\n";
       }
     }
   }
