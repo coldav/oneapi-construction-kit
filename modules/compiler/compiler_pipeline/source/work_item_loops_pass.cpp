@@ -1814,48 +1814,66 @@ Function *compiler::utils::WorkItemLoopsPass::makeWrapperFunction(
     barrierTail->getFunc().setLinkage(Function::InternalLinkage);
   }
 
-  llvm::BasicBlock *innerLoopEntry = nullptr;
-  llvm::BasicBlock *innerLoopExit = nullptr;
+  // llvm::BasicBlock *innerLoopEntry = nullptr;
+  // llvm::BasicBlock *innerLoopExit = nullptr;
   // TODO: We need a better way than just checking names
   for (auto &block : *new_wrapper) {
     llvm::errs() << "___CSD___ new wrapper " << block.getName() << "\n";
-    if (block.getName() == "loopIR3") {
-      innerLoopEntry = &block;
-    } else if (block.getName() == "exitIR") {
-      innerLoopExit = &block;
-    }
+    // if (block.getName() == "loopIR3") {
+    //   innerLoopEntry = &block;
+    // } else if (block.getName() == "exitIR") {
+    //   innerLoopExit = &block;
+    // }
     if (auto *branch =
             llvm::dyn_cast<llvm::BranchInst>(block.getTerminator())) {
       MDNode *node = branch->getMetadata("llvm.loop");
       if (node && node->getNumOperands() >= 2) {
-        // Iterate over the metdata node operands and look for MDString metadata.
+        // Iterate over the metdata node operands and look for MDString
+        // metadata.
         for (const MDOperand &MDO : llvm::drop_begin(node->operands())) {
           MDNode *MD = dyn_cast<MDNode>(MDO);
-          if (!MD || MD->getNumOperands() < 1)
-            continue;
+          if (!MD || MD->getNumOperands() < 1) continue;
           MDString *S = dyn_cast<MDString>(MD->getOperand(0));
-        if (!S)
-          continue;
-        // Return the operand node if MDString holds expected metadata.
-        if (Name == S->getString())
-          return MD;
+          if (!S) continue;
+          if (S->getString() == "llvm.loop.parallel_accesses") {
+            // Return the operand node if MDString holds expected metadata.
+            llvm::errs() << "__CSD__ meta string" << S->getString() << "\n";
+            llvm::errs() << "__CSD__ branch = " << *branch << "\n";
+            llvm::BasicBlock *LoopStart = branch->getSuccessor(0);
+            llvm::BasicBlock *LoopExit = branch->getSuccessor(1);
+            for (auto &ins : *LoopStart) {
+              if (auto *ci = dyn_cast<llvm::CallInst>(&ins)) {
+                llvm::InlineFunctionInfo IFI;
+                auto inlineResult =
+                    llvm::InlineFunction(*ci, IFI, /*MergeAttributes*/ false,
+                                          /*CalleeAAR*/ nullptr, /*InsertLifetime*/
+                                          true,
+                                          /*ForwardVarArgsTo*/ nullptr);
+
+              }
+            }
+          }
+          // return MD;
+        }
+      }
+    }
   }
 
   // Loop property not found.
-  return nullptr;
-}        
-        const llvm::MDOperand &Operand = node->getOperand(1);
-        llvm::Metadata *metadata = Operand.get();
-        llvm::errs() << "___CSD__ " << *metadata << "\n";
+  // return nullptr;
+// }        
+        // const llvm::MDOperand &Operand = node->getOperand(1);
+        // llvm::Metadata *metadata = Operand.get();
+        // llvm::errs() << "___CSD__ " << *metadata << "\n";
 
 
         // llvm::errs() << "DUMPIT " << *(mainF.getParent());
         // llvm::errs() << "Terminator node is " << *node << "\n";
-      }
-    }
-  }
-  (void)innerLoopEntry;
-  (void)innerLoopExit;
+  //     }
+  //   }
+  // }
+  // (void)innerLoopEntry;
+  // (void)innerLoopExit;
   // if (innerLoopEntry && innerLoopExit) {
   //   for (auto &ins : *innerLoopEntry) {
   //     if (auto *ci = dyn_cast<llvm::CallInst>(&ins)) {
@@ -1891,7 +1909,7 @@ Function *compiler::utils::WorkItemLoopsPass::makeWrapperFunction(
   //     }
   //   }
   // }
-  llvm::errs() << *new_wrapper;
+  // llvm::errs() << *new_wrapper;
   return new_wrapper;
 }
 
