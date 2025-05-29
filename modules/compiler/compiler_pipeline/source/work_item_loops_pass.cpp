@@ -1845,8 +1845,12 @@ Function *compiler::utils::WorkItemLoopsPass::makeWrapperFunction(
                                           basicBlocksInLoop);
                   for (auto *block : basicBlocksInLoop) {
                     for (auto &ins : *block) {
-                      if (ins.mayReadOrWriteMemory() &&
-                          !llvm::isa<llvm::CallInst>(&ins)) {
+                      llvm::LoadInst *load = llvm::dyn_cast<llvm::LoadInst>(&ins);
+                      llvm::StoreInst *store = llvm::dyn_cast<llvm::StoreInst>(&ins);
+                      // temp workaround
+                      if ((load && load->getOrdering() == AtomicOrdering::NotAtomic) || (store && store->getOrdering() == AtomicOrdering::NotAtomic)) {
+                      // if (ins.mayReadOrWriteMemory() &&
+                      //     !llvm::isa<llvm::CallInst>(&ins)) {
                         MDNode *newNode = MDNode::get(context, accessGroupNode);
                         MDNode *oldNode = ins.getMetadata("llvm.access.group");
                         if (oldNode != nullptr) {
