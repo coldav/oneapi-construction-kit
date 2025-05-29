@@ -110,6 +110,19 @@ Value *materializeVF(IRBuilder<> &builder,
   return !vf.isScalable() ? multiple : builder.CreateVScale(multiple);
 }
 
+void findBasicBlocksInWILoop(
+    llvm::BasicBlock *block, llvm::BasicBlock *exitBlock,
+    llvm::SmallSet<llvm::BasicBlock *, 4> &basicBlocksInLoop) {
+  if (basicBlocksInLoop.contains(block)) {
+    return;
+  } else if (block != exitBlock) {
+    basicBlocksInLoop.insert(block);
+    for (auto *successor : llvm::successors(block)) {
+      findBasicBlocksInWILoop(successor, exitBlock, basicBlocksInLoop);
+    }
+  }
+}
+
 struct ScheduleGenerator {
   ScheduleGenerator(Module &m,
                     const compiler::utils::BarrierWithLiveVars &barrierMain,
@@ -264,7 +277,7 @@ struct ScheduleGenerator {
       const compiler::utils::BarrierWithLiveVars &barrier, IRBuilder<> &ir,
       BasicBlock *block, unsigned i, Value *dim_0, Value *dim_1, Value *dim_2,
       Value *accumulator = nullptr, Value *VF = nullptr,
-      Value *offset = nullptr, CallInst **callableInline = nullptr) {
+      Value *offset = nullptr) {
     auto new_kernel_args = args;
     if (accumulator) {
       new_kernel_args.push_back(accumulator);
@@ -320,8 +333,6 @@ struct ScheduleGenerator {
     const auto &successors = barrier.getSuccessorIds(i);
     if (successors.size() > 1) {
       ir.CreateStore(ci, nextID);
-    } else if (callableInline) {
-      *callableInline = ci;
     }
   }
 
@@ -417,19 +428,6 @@ struct ScheduleGenerator {
                                                            barrier0);
     for (auto &value : values) {
       value = live_values.getReload(value, ir, "_load", true);
-    }
-  }
-
-  void findBasicBlocksInWILoop(
-      llvm::BasicBlock *block, llvm::BasicBlock *exitBlock,
-      llvm::SmallSet<llvm::BasicBlock *, 4> &basicBlocksInLoop) {
-    if (basicBlocksInLoop.contains(block)) {
-      return;
-    } else if (block != exitBlock) {
-      basicBlocksInLoop.insert(block);
-      for (auto *successor : llvm::successors(block)) {
-        findBasicBlocksInWILoop(successor, exitBlock, basicBlocksInLoop);
-      }
     }
   }
 
@@ -628,8 +626,7 @@ struct ScheduleGenerator {
 #endif
   // Create loops to execute all the main work items, and then all the
   // left-over tail work items at the end.
-  BasicBlock *makeWorkItemLoops(BasicBlock *block, unsigned barrierID,
-                                llvm::CallInst **callInline = nullptr) {
+  BasicBlock *makeWorkItemLoops(BasicBlock *block, unsigned barrierID) {
     Value *accum = nullptr;
     std::optional<compiler::utils::GroupCollective> collective;
     std::tie(block, accum, collective) =
@@ -763,7 +760,7 @@ struct ScheduleGenerator {
                         createWorkItemLoopBody(barrierMain, ir, block,
                                                barrierID, dim_0, dim_1, dim_2,
                                                accum, VF,
-                                               /*offset=*/nullptr, callInline);
+                                               /*offset=*/nullptr);
 
                         if (!noExplicitSubgroups) {
                           nextSubgroupIV =
@@ -1814,16 +1811,7 @@ Function *compiler::utils::WorkItemLoopsPass::makeWrapperFunction(
     barrierTail->getFunc().setLinkage(Function::InternalLinkage);
   }
 
-  // llvm::BasicBlock *innerLoopEntry = nullptr;
-  // llvm::BasicBlock *innerLoopExit = nullptr;
-  // TODO: We need a better way than just checking names
   for (auto &block : *new_wrapper) {
-    llvm::errs() << "___CSD___ new wrapper " << block.getName() << "\n";
-    // if (block.getName() == "loopIR3") {
-    //   innerLoopEntry = &block;
-    // } else if (block.getName() == "exitIR") {
-    //   innerLoopExit = &block;
-    // }
     if (auto *branch =
             llvm::dyn_cast<llvm::BranchInst>(block.getTerminator())) {
       MDNode *node = branch->getMetadata("llvm.loop");
@@ -1836,20 +1824,40 @@ Function *compiler::utils::WorkItemLoopsPass::makeWrapperFunction(
           MDString *S = dyn_cast<MDString>(MD->getOperand(0));
           if (!S) continue;
           if (S->getString() == "llvm.loop.parallel_accesses") {
+            MDNode *accessGroupNode = dyn_cast<MDNode>(MD->getOperand(1));
             // Return the operand node if MDString holds expected metadata.
-            llvm::errs() << "__CSD__ meta string" << S->getString() << "\n";
-            llvm::errs() << "__CSD__ branch = " << *branch << "\n";
             llvm::BasicBlock *LoopStart = branch->getSuccessor(0);
             llvm::BasicBlock *LoopExit = branch->getSuccessor(1);
             for (auto &ins : *LoopStart) {
               if (auto *ci = dyn_cast<llvm::CallInst>(&ins)) {
                 llvm::InlineFunctionInfo IFI;
-                auto inlineResult =
-                    llvm::InlineFunction(*ci, IFI, /*MergeAttributes*/ false,
-                                          /*CalleeAAR*/ nullptr, /*InsertLifetime*/
-                                          true,
-                                          /*ForwardVarArgsTo*/ nullptr);
+                auto inlineResult = llvm::InlineFunction(
+                    *ci, IFI, /*MergeAttributes*/ false,
+                    /*CalleeAAR*/ nullptr, /*InsertLifetime*/
+                    true,
+                    /*ForwardVarArgsTo*/ nullptr);
+                (void)inlineResult;
+                if (inlineResult.isSuccess()) {
+                  // hack attempt to add access metadata to memory instructions
+                  llvm::SmallSet<llvm::BasicBlock *, 4> basicBlocksInLoop;
 
+                  findBasicBlocksInWILoop(LoopStart, LoopExit,
+                                          basicBlocksInLoop);
+                  for (auto *block : basicBlocksInLoop) {
+                    for (auto &ins : *block) {
+                      if (ins.mayReadOrWriteMemory() &&
+                          !llvm::isa<llvm::CallInst>(&ins)) {
+                        MDNode *newNode = MDNode::get(context, accessGroupNode);
+                        MDNode *oldNode = ins.getMetadata("llvm.access.group");
+                        if (oldNode != nullptr) {
+                          newNode = llvm::MDNode::concatenate(oldNode, newNode);
+                        }
+                        ins.setMetadata("llvm.access.group", newNode);
+                      }
+                    }
+                  }
+                  break;
+                }
               }
             }
           }
@@ -1859,57 +1867,6 @@ Function *compiler::utils::WorkItemLoopsPass::makeWrapperFunction(
     }
   }
 
-  // Loop property not found.
-  // return nullptr;
-// }        
-        // const llvm::MDOperand &Operand = node->getOperand(1);
-        // llvm::Metadata *metadata = Operand.get();
-        // llvm::errs() << "___CSD__ " << *metadata << "\n";
-
-
-        // llvm::errs() << "DUMPIT " << *(mainF.getParent());
-        // llvm::errs() << "Terminator node is " << *node << "\n";
-  //     }
-  //   }
-  // }
-  // (void)innerLoopEntry;
-  // (void)innerLoopExit;
-  // if (innerLoopEntry && innerLoopExit) {
-  //   for (auto &ins : *innerLoopEntry) {
-  //     if (auto *ci = dyn_cast<llvm::CallInst>(&ins)) {
-  //       llvm::errs() << "Inlining call from " << *ci << "\n";
-  //       llvm::InlineFunctionInfo IFI;
-  //       auto inlineResult =
-  //           llvm::InlineFunction(*ci, IFI, /*MergeAttributes*/ false,
-  //                                /*CalleeAAR*/ nullptr, /*InsertLifetime*/
-  //                                true,
-  //                                /*ForwardVarArgsTo*/ nullptr);
-  //       if (inlineResult.isSuccess()) {
-  //         llvm::errs() << "Inlining call succeeded!\n";
-  //         // hack attempt to add access metadata to memory instructions
-  //         llvm::SmallSet<llvm::BasicBlock *, 4> basicBlocksInLoop;
-
-  //         // findBasicBlocksInWILoop(innerLoopEntry, innerLoopExit,
-  //         //                         basicBlocksInLoop);
-  //         // for (auto *block : basicBlocksInLoop) {
-  //           llvm::errs() << "___CSD__ Processing block " << block->getName()
-  //                        << "\n";
-  //           for (auto &ins : *block) {
-  //             if (ins.mayReadOrWriteMemory()) {
-  //               // MDNode *newNode = MDNode::get(context, accessGroupNode);
-  //               // MDNode *oldNode = ins.getMetadata("llvm.access.group");
-  //               // if (oldNode != nullptr) {
-  //               //   newNode = llvm::MDNode::concatenate(oldNode, newNode);
-  //               // }
-  //               // ins.setMetadata("llvm.access.group", newNode);
-  //             }
-  //           }
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
-  // llvm::errs() << *new_wrapper;
   return new_wrapper;
 }
 
