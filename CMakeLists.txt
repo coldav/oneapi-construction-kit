@@ -181,6 +181,8 @@ if(CA_RUNTIME_COMPILER_ENABLED AND NOT OCK_IN_LLVM_TREE)
   include(ImportLLVM)
 endif()
 
+add_subdirectory(compiler_passes)
+
 # Bring in our sanitizer support.
 include(Sanitizers)
 # Add the ability to use CMAKE_BUILD_TYPE=ReleaseAssert enabling assertions
