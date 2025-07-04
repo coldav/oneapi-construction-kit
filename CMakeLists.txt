@@ -177,11 +177,12 @@ if (TARGET LLVMCore)
   set(OCK_IN_LLVM_TREE TRUE)
 endif()
 
-if(CA_RUNTIME_COMPILER_ENABLED AND NOT OCK_IN_LLVM_TREE)
-  include(ImportLLVM)
+if(CA_RUNTIME_COMPILER_ENABLED)
+  if(NOT OCK_IN_LLVM_TREE)
+    include(ImportLLVM)
+  endif()
+  add_subdirectory(compiler_passes)
 endif()
-
-add_subdirectory(compiler_passes)
 
 # Bring in our sanitizer support.
 include(Sanitizers)

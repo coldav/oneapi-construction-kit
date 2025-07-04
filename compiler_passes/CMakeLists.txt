@@ -23,12 +23,8 @@ set(OCK_IN_LLVM_TREE FALSE)
 if (TARGET LLVMCore)
   set(OCK_IN_LLVM_TREE TRUE)
 endif()
-include(AddCompilerPasses)
 
-# if(NOT OCK_IN_LLVM_TREE)
-#   include(../cmake/ImportLLVM.cmake)
-#   include_directories(SYSTEM ${LLVM_INCLUDE_DIR})
-# endif()
+include(AddCompilerPasses)
 
 add_subdirectory(multi_llvm)
 add_subdirectory(compiler_pipeline)
