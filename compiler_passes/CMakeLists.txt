@@ -17,15 +17,19 @@
 cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
 project(ock_compiler_utils VERSION 1.0.0 LANGUAGES C CXX ASM)
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
 
 set(OCK_IN_LLVM_TREE FALSE)
 if (TARGET LLVMCore)
   set(OCK_IN_LLVM_TREE TRUE)
 endif()
+include(AddCA)
 
-include(AddCompilerPasses)
+if(NOT OCK_IN_LLVM_TREE)
+  include(../cmake/ImportLLVM.cmake)
+  include_directories(SYSTEM ${LLVM_INCLUDE_DIR})
+endif()
 
-add_subdirectory(multi_llvm)
-add_subdirectory(compiler_pipeline)
-add_subdirectory(vecz)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../modules/compiler/multi_llvm ${CMAKE_CURRENT_BINARY_DIR}/multi_llvm)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../modules/compiler/compiler_pipeline ${CMAKE_CURRENT_BINARY_DIR}/compiler_pipeline)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../modules/compiler/vecz ${CMAKE_CURRENT_BINARY_DIR}/vecz)

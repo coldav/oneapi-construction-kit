@@ -53,10 +53,10 @@ if (CA_ENABLE_TESTS)
   add_custom_target(${OCK_CHECK_TARGET} COMMENT "OCK checks.")
   # Add 'check' as an alias for 'check-ock-compiler', unless we're in tree, in which
   # case the parent project may be defining its own top-level 'check' target.
-  if (NOT OCK_IN_LLVM_TREE)
-    add_custom_target(check)
-    add_dependencies(check check-ock-compiler)
-  endif()
+  # if (NOT OCK_IN_LLVM_TREE)
+  #   add_custom_target(check)
+  #   add_dependencies(check check-ock-compiler)
+  # endif()
 endif()
 
 if(NOT MSVC AND (CA_BUILD_32_BITS OR CMAKE_SIZEOF_VOID_P EQUAL 4) AND
