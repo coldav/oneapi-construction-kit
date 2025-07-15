@@ -837,7 +837,7 @@ jobs:
       - name: build e2e
         uses: ./.github/actions/do_build_run_sycl_e2e
         with:
-          target: host_x86_64_linux
+          target: host_aarch64_linux
           sycl_device: native_cpu
 
   run_sycl_e2e_x86_64_opencl:
@@ -855,5 +855,5 @@ jobs:
       - name: build e2e
         uses: ./.github/actions/do_build_run_sycl_e2e
         with:
-          target: host_x86_64_linux
+          target: host_aarch64_linux
           sycl_device: opencl
