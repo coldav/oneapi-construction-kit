@@ -118,7 +118,8 @@ endif()
 add_custom_target(doc_html
   COMMAND ${SPHINX_BUILD} --color -b html
     ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/html
-  DEPENDS doc-copy doxygen
+  DEPENDS doc-copy
+  # doxygen
   USES_TERMINAL COMMENT "Generate Documentation HTML")
 
 # PDF documentation generatation is not currently supported on Windows since
