@@ -20,28 +20,9 @@ permissions:
 # However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
   group: "pages"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
-  # Build job
-  # build_rfc:
-  #   # if: github.repository == 'uxlfoundation/oneapi-construction-kit' || github.event_name == 'workflow_dispatch'  
-  #   if: github.repository == 'coldav/oneapi-construction-kit' || github.event_name == 'workflow_dispatch'  
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-  #       with:
-  #         ref: rfcs
-  #     - name: Setup Pages
-  #       uses: actions/configure-pages@v5
-  #     - name: Build with Jekyll
-  #       uses: actions/jekyll-build-pages@v1
-  #       with:
-  #         source: ./
-  #         destination: ./_site/rfcs
-  #     - name: Upload artifact
-  #       uses: actions/upload-pages-artifact@v3
 
   build_ock_docs:
     # if: github.repository == 'uxlfoundation/oneapi-construction-kit' || github.event_name == 'workflow_dispatch'  
@@ -66,8 +47,10 @@ jobs:
       - name: Build Documentation
         working-directory: ${{github.workspace}}
         run: |
-          cmake -DCMAKE_BUILD_TYPE=Debug -DCA_RUNTIME_COMPILER_ENABLED=OFF -DCA_CL_ENABLE_OFFLINE_KERNEL_TESTS=OFF -DOCL_EXTENSION_cl_khr_il_program=OFF -Bbuild_doc
-          cmake --build build_doc --target doc_html
+           cmake -DCMAKE_BUILD_TYPE=Debug -DCA_RUNTIME_COMPILER_ENABLED=OFF -DCA_CL_ENABLE_OFFLINE_KERNEL_TESTS=OFF -DOCL_EXTENSION_cl_khr_il_program=OFF -Bbuild_doc
+           cmake --build build_doc --target doc_html
+           mkdir docs
+           mv build_doc/doc/html docs/ock
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -77,15 +60,20 @@ jobs:
 
       - name: Move rfcs to build_doc
         shell: bash
-        run:
-          mv rfcs build_doc/doc
-         
+        run: |
+          mv rfcs/* docs
+          cp -r $GITHUB_WORKSPACE/.github/workflows/combined_docs/* docs
+
+          # TODO : Remove from original rfc docs
+          sed -i 's/permalink: index/permalink: rfc-0000/' docs/rfc-0000.md
+          sed -i 's/split.size == 2 %/split.size == 2 and page.rfc %/' docs/rfc-0000.md
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Build with Jekyll
         uses: actions/jekyll-build-pages@v1
         with:
-          source: ./build_doc/doc
+          source: ./docs
           destination: ./_site
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
