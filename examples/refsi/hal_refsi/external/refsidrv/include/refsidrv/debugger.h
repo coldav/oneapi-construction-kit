@@ -19,11 +19,11 @@
 #ifndef _RISCV_DEBUGGER_H
 #define _RISCV_DEBUGGER_H
 
-#include "riscv/devices.h"
-
-#include <vector>
-#include <string>
 #include <map>
+#include <string>
+#include <vector>
+
+#include "riscv/devices.h"
 
 class slim_sim_t;
 class debugger_t;
@@ -33,7 +33,7 @@ typedef void (debugger_t::*debug_command_handler)();
 using handler_map = std::map<std::string, debug_command_handler>;
 
 struct debugger_t {
-public:
+ public:
   explicit debugger_t(slim_sim_t &sim);
 
   void read_command();
@@ -58,14 +58,14 @@ public:
   void set_cmd(const std::string &s) { this->cmd = s; }
   void set_args(const std::vector<std::string> &v) { this->args = v; }
 
-protected:
+ protected:
   void interactive_until(bool noisy);
 
-  processor_t *get_core(const std::string& i);
-  reg_t get_pc(const std::vector<std::string>& args);
-  reg_t get_reg(const std::vector<std::string>& args);
-  freg_t get_freg(const std::vector<std::string>& args);
-  reg_t get_mem(const std::vector<std::string>& args);
+  processor_t *get_core(const std::string &i);
+  reg_t get_pc(const std::vector<std::string> &args);
+  reg_t get_reg(const std::vector<std::string> &args);
+  freg_t get_freg(const std::vector<std::string> &args);
+  reg_t get_mem(const std::vector<std::string> &args);
 
   slim_sim_t &sim;
   handler_map handlers;

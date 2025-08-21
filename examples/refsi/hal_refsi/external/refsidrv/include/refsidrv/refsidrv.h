@@ -55,11 +55,7 @@ enum refsi_result {
 enum { refsi_nullptr = 0 };
 
 /// @brief Represents the kind of RefSi device to control.
-enum refsi_device_family {
-  REFSI_DEFAULT = 0,
-  REFSI_M = 1,
-  REFSI_G = 2
-};
+enum refsi_device_family { REFSI_DEFAULT = 0, REFSI_M = 1, REFSI_G = 2 };
 
 // Driver start-up and teardown.
 
@@ -283,10 +279,10 @@ REFSI_API uint64_t refsiEncodeCMPCommand(refsi_cmp_command_id opcode,
 
 #define CMP_NUM_WINDOWS 8
 
-#define REFSI_NUM_GLOBAL_PERF_COUNTERS      32
-#define REFSI_NUM_PER_HART_PERF_COUNTERS    32
-#define REFSI_NUM_PERF_COUNTERS    (REFSI_NUM_GLOBAL_PERF_COUNTERS + \
-                                    REFSI_NUM_PER_HART_PERF_COUNTERS)
+#define REFSI_NUM_GLOBAL_PERF_COUNTERS 32
+#define REFSI_NUM_PER_HART_PERF_COUNTERS 32
+#define REFSI_NUM_PERF_COUNTERS \
+  (REFSI_NUM_GLOBAL_PERF_COUNTERS + REFSI_NUM_PER_HART_PERF_COUNTERS)
 
 /// @brief Identifies a command processor register.
 enum refsi_cmp_register_id {
@@ -344,12 +340,12 @@ enum refsi_cmp_register_id {
 // Extract the SCALE_B field from the CMP_REG_WINDOW_SCALEx register.
 #define CMP_GET_WINDOW_SCALE_B(reg) ((reg) >> 32ull)
 
-#define CMP_WINDOW_ACTIVE             1
-#define CMP_WINDOW_MODE_SHARED        0
-#define CMP_WINDOW_MODE_PERT_HART     2
+#define CMP_WINDOW_ACTIVE 1
+#define CMP_WINDOW_MODE_SHARED 0
+#define CMP_WINDOW_MODE_PERT_HART 2
 
-#define CMP_CACHE_SYNC_ACC_DCACHE     1
-#define CMP_CACHE_SYNC_ACC_ICACHE     2
+#define CMP_CACHE_SYNC_ACC_DCACHE 1
+#define CMP_CACHE_SYNC_ACC_ICACHE 2
 
 /// @brief Identifies a RefSi performance counter.
 enum refsi_perf_counter_id {

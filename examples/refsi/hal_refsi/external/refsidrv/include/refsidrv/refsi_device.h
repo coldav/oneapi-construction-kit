@@ -99,7 +99,7 @@ struct RefSiDevice {
   RefSiMemoryController &getMemory();
 
   /// @brief Return the lock used to protect device state.
-  std::mutex & getLock() { return mutex; }
+  std::mutex &getLock() { return mutex; }
 
   /// @brief Whether debug output is enabled or not.
   bool getDebug() const { return debug; }

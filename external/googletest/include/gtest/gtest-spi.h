@@ -64,11 +64,11 @@ class GTEST_API_ ScopedFakeTestPartResultReporter
   // by Google Test.  The 'result' parameter specifies where to report the
   // results. This reporter will only catch failures generated in the current
   // thread. DEPRECATED
-  explicit ScopedFakeTestPartResultReporter(TestPartResultArray* result);
+  explicit ScopedFakeTestPartResultReporter(TestPartResultArray *result);
 
   // Same as above, but you can choose the interception scope of this object.
   ScopedFakeTestPartResultReporter(InterceptMode intercept_mode,
-                                   TestPartResultArray* result);
+                                   TestPartResultArray *result);
 
   // The d'tor restores the previous test part result reporter.
   ~ScopedFakeTestPartResultReporter() override;
@@ -78,19 +78,19 @@ class GTEST_API_ ScopedFakeTestPartResultReporter
   //
   // This method is from the TestPartResultReporterInterface
   // interface.
-  void ReportTestPartResult(const TestPartResult& result) override;
+  void ReportTestPartResult(const TestPartResult &result) override;
 
  private:
   void Init();
 
   const InterceptMode intercept_mode_;
-  TestPartResultReporterInterface* old_reporter_;
-  TestPartResultArray* const result_;
+  TestPartResultReporterInterface *old_reporter_;
+  TestPartResultArray *const result_;
 
-  ScopedFakeTestPartResultReporter(const ScopedFakeTestPartResultReporter&) =
+  ScopedFakeTestPartResultReporter(const ScopedFakeTestPartResultReporter &) =
       delete;
-  ScopedFakeTestPartResultReporter& operator=(
-      const ScopedFakeTestPartResultReporter&) = delete;
+  ScopedFakeTestPartResultReporter &operator=(
+      const ScopedFakeTestPartResultReporter &) = delete;
 };
 
 namespace internal {
@@ -103,17 +103,17 @@ namespace internal {
 class GTEST_API_ SingleFailureChecker {
  public:
   // The constructor remembers the arguments.
-  SingleFailureChecker(const TestPartResultArray* results,
-                       TestPartResult::Type type, const std::string& substr);
+  SingleFailureChecker(const TestPartResultArray *results,
+                       TestPartResult::Type type, const std::string &substr);
   ~SingleFailureChecker();
 
  private:
-  const TestPartResultArray* const results_;
+  const TestPartResultArray *const results_;
   const TestPartResult::Type type_;
   const std::string substr_;
 
-  SingleFailureChecker(const SingleFailureChecker&) = delete;
-  SingleFailureChecker& operator=(const SingleFailureChecker&) = delete;
+  SingleFailureChecker(const SingleFailureChecker &) = delete;
+  SingleFailureChecker &operator=(const SingleFailureChecker &) = delete;
 };
 
 }  // namespace internal

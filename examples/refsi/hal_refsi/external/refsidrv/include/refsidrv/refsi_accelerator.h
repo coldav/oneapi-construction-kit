@@ -17,11 +17,11 @@
 #ifndef _REFSIDRV_REFSI_ACCELERATOR_H
 #define _REFSIDRV_REFSI_ACCELERATOR_H
 
+#include <memory>
+
 #include "refsidrv.h"
 #include "slim_sim.h"
 #include "trap_handlers.h"
-
-#include <memory>
 
 struct RefSiDevice;
 
@@ -46,7 +46,7 @@ struct RefSiAccelerator {
   RefSiAccelerator(RefSiDevice &soc);
 
   /// @brief String that describes the ISA exposed by accelerator cores.
-  const char * getISA() const { return isa.empty() ? nullptr : isa.c_str(); }
+  const char *getISA() const { return isa.empty() ? nullptr : isa.c_str(); }
   void setISA(std::string new_isa) { isa = new_isa; }
 
   /// @brief String that describes the vector ISA exposed by accelerator cores.
@@ -128,14 +128,14 @@ struct RefSiAccelerator {
 /// simulator is notified that the currently-executing hart has exited
 /// gracefully.
 class RefSiTrapHandler : public default_trap_handler {
-public:
+ public:
   bool handle_trap(trap_t &trap, reg_t pc, slim_sim_t &sim) override;
   bool handle_return(trap_t &trap, reg_t pc, slim_sim_t &sim);
 
   reg_t get_return_addr() const { return return_addr; }
   void set_return_addr(reg_t new_addr) { return_addr = new_addr; }
 
-private:
+ private:
   reg_t return_addr = 0;
 };
 

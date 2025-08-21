@@ -58,9 +58,7 @@ inline unit_kind get_unit_kind(unit_id_t unit_id) {
 
 /// @brief Retrieve the 'index' part of a unit ID. This could be for example the
 /// hart ID if the unit refers to a hart.
-inline uint16_t get_unit_index(unit_id_t unit_id) {
-  return (unit_id & 0xffff);
-}
+inline uint16_t get_unit_index(unit_id_t unit_id) { return (unit_id & 0xffff); }
 
 /// @brief Return a textual representation of the unit ID.
 std::string format_unit(unit_id_t unit_id);
@@ -145,7 +143,7 @@ class MemoryDeviceBase : public MemoryDevice {
 /// device's base address. This base address is used to query the memory
 /// interface for the sub-device which 'lives' at a specified address.
 class MemoryInterface : public MemoryDevice {
-public:
+ public:
   /// @brief Query the memory interface for a device at the given address.
   /// @param addr Address to query for a device.
   /// @param dev_offset On success, offset from the returned device's base
@@ -156,7 +154,7 @@ public:
 /// @brief Utility class to help manage a set of devices under the same address
 /// space. Devices can be added and removed dynamically.
 class MemoryController : public MemoryInterface {
-public:
+ public:
   /// @brief Create a new memory controller with no sub-devices.
   MemoryController() {}
 
@@ -169,7 +167,7 @@ public:
   /// another device is already using the base address.
   /// @param addr Base address of the device, i.e. where it will be mapped.
   /// @param dev Device to add to map in the memory controller.
-  bool add_device(reg_t addr, MemoryDevice* dev);
+  bool add_device(reg_t addr, MemoryDevice *dev);
 
   /// @brief Remove (unmap) a device from the memory controller, given its exact
   /// base address.
@@ -182,10 +180,10 @@ public:
   /// region.
   /// @param addr Address to use to locate the device.
   /// @return Pair of (base address, memory device) on success.
-  std::pair<reg_t, MemoryDevice*> find_device(reg_t addr);
+  std::pair<reg_t, MemoryDevice *> find_device(reg_t addr);
 
   /// @brief Return a read-only map of the mapped devices.
-  const std::map<reg_t, MemoryDevice*> & get_devices() { return devices; }
+  const std::map<reg_t, MemoryDevice *> &get_devices() { return devices; }
 
   /// @brief Try to find a device mapped at the given address, which does not
   /// need to be the base address but can point anywhere in the device's memory
@@ -218,7 +216,7 @@ public:
   /// be nullptr.
   /// @param unit ID of the execution unit requesting the memory access.
   /// @return true on success and false on failure.
-  bool load(reg_t addr, size_t len, uint8_t* bytes, unit_id_t unit) override;
+  bool load(reg_t addr, size_t len, uint8_t *bytes, unit_id_t unit) override;
 
   /// @brief Try to write data to the device. This is equivalent to calling
   /// @ref find_device followed by @ref store on the returned device,
@@ -228,7 +226,7 @@ public:
   /// @param bytes Data to write to the device - must not be nullptr.
   /// @param unit ID of the execution unit requesting the memory access.
   /// @return true on success and false on failure.
-  bool store(reg_t addr, size_t len, const uint8_t* bytes,
+  bool store(reg_t addr, size_t len, const uint8_t *bytes,
              unit_id_t unit) override;
 
   /// @brief Try to copy data from one area of memory to another.
@@ -239,16 +237,14 @@ public:
   /// @return true on success and false on failure.
   bool copy(reg_t dst_addr, reg_t src_addr, size_t len, unit_id_t unit);
 
-private:
-  std::map<reg_t, MemoryDevice*> devices;
+ private:
+  std::map<reg_t, MemoryDevice *> devices;
 };
 
 class RAMDevice : public MemoryDeviceBase {
  public:
-  RAMDevice (size_t size);
-  virtual ~RAMDevice() {
-    free(data);
-  }
+  RAMDevice(size_t size);
+  virtual ~RAMDevice() { free(data); }
 
   uint8_t *contents() { return data; }
   size_t mem_size() const override { return size; }
@@ -262,9 +258,7 @@ class RAMDevice : public MemoryDeviceBase {
 
 class ROMDevice : public MemoryDeviceBase {
  public:
-  ROMDevice (size_t size) {
-    data.resize(size);
-  }
+  ROMDevice(size_t size) { data.resize(size); }
 
   uint8_t *contents() { return data.data(); }
   size_t mem_size() const override { return data.size(); }
@@ -280,22 +274,22 @@ class ROMDevice : public MemoryDeviceBase {
 };
 
 class HartLocalDevice : public MemoryDeviceBase {
-public:
+ public:
   HartLocalDevice(size_t size) : size(size) {}
   virtual ~HartLocalDevice();
 
   uint8_t *addr_to_mem(reg_t addr, size_t size, unit_id_t unit_id) override;
 
-  uint8_t* mem_contents(unit_id_t unit_id);
+  uint8_t *mem_contents(unit_id_t unit_id);
   size_t mem_size() const override { return size; }
 
-private:
+ private:
   size_t size;
   std::vector<uint8_t *> hart_contents;
 };
 
 class FileDevice : public MemoryDevice {
-public:
+ public:
   FileDevice(const char *path);
   virtual ~FileDevice();
 
@@ -303,16 +297,16 @@ public:
 
   size_t mem_size() const override;
 
-  bool load(reg_t addr, size_t len, uint8_t* bytes, unit_id_t unit_id) override;
-  bool store(reg_t addr, size_t len, const uint8_t* bytes,
+  bool load(reg_t addr, size_t len, uint8_t *bytes, unit_id_t unit_id) override;
+  bool store(reg_t addr, size_t len, const uint8_t *bytes,
              unit_id_t unit_id) override;
 
-private:
+ private:
   int fd;
 };
 
 class BufferDevice : public MemoryDeviceBase {
-public:
+ public:
   BufferDevice(const void *data, size_t size) : data(data), size(size) {}
 
   size_t mem_size() const override { return size; }
@@ -320,7 +314,7 @@ public:
   uint8_t *addr_to_mem(reg_t dev_offset, size_t size,
                        unit_id_t unit_id) override;
 
-private:
+ private:
   const void *data;
   size_t size;
 };

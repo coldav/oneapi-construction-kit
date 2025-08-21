@@ -307,7 +307,7 @@ internal::ParamGenerator<T> ValuesIn(const T (&array)[N]) {
 
 template <class Container>
 internal::ParamGenerator<typename Container::value_type> ValuesIn(
-    const Container& container) {
+    const Container &container) {
   return ValuesIn(container.begin(), container.end());
 }
 
@@ -403,7 +403,7 @@ inline internal::ParamGenerator<bool> Bool() { return Values(false, true); }
 //                          Combine(Bool(), Bool()));
 //
 template <typename... Generator>
-internal::CartesianProductHolder<Generator...> Combine(const Generator&... g) {
+internal::CartesianProductHolder<Generator...> Combine(const Generator &...g) {
   return internal::CartesianProductHolder<Generator...>(g...);
 }
 
@@ -499,7 +499,7 @@ internal::ParamConverterGenerator<T> ConvertGenerator(
     return GTEST_EXPAND_(GTEST_GET_FIRST_(__VA_ARGS__, DUMMY_PARAM_));       \
   }                                                                          \
   static ::std::string gtest_##prefix##test_suite_name##_EvalGenerateName_(  \
-      const ::testing::TestParamInfo<test_suite_name::ParamType>& info) {    \
+      const ::testing::TestParamInfo<test_suite_name::ParamType> &info) {    \
     if (::testing::internal::AlwaysFalse()) {                                \
       ::testing::internal::TestNotEmpty(GTEST_EXPAND_(GTEST_GET_SECOND_(     \
           __VA_ARGS__,                                                       \

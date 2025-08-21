@@ -22,7 +22,7 @@
 class PerfCounterDevice;
 
 struct RefSiGDevice : public RefSiDevice {
-public:
+ public:
   RefSiGDevice(const char *isa, unsigned vlen);
 
   /// @brief Shut down the device.
@@ -38,9 +38,9 @@ public:
   refsi_result executeKernel(refsi_addr_t entry_fn_addr, uint32_t num_harts);
 
   /// @brief Retrieve the default RISC-V configuration for RefSi G1 devices.
-  static void getDefaultConfig(const char * &isa, int &vlen);
+  static void getDefaultConfig(const char *&isa, int &vlen);
 
-private:
+ private:
   refsi_result setupELFWindow(unsigned index);
   refsi_result setupHartLocalWindow(unsigned index);
   void pre_run_kernel(slim_sim_t &sim, reg_t entry_point_addr);

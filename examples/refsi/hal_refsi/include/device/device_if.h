@@ -69,7 +69,7 @@ typedef struct exec_state {
 #define REFSI_MAGIC ('R' | ('e' << 8) | ('S' << 16) | ('i' << 24))
 
 // Retrieve the thread mode from RefSi flags.
-#define REFSI_FLAG_GET_THREAD_MODE(x) ((x)&0x1)
+#define REFSI_FLAG_GET_THREAD_MODE(x) ((x) & 0x1)
 
 // Launch the kernel using the work-item-per-thread mode.
 #define REFSI_THREAD_MODE_WI 0

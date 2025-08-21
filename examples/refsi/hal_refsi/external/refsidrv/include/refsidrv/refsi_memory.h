@@ -44,12 +44,12 @@ struct RefSiMemoryController : public MemoryController {
   void addMemDevice(reg_t address, size_t size, refsi_memory_map_kind kind,
                     MemoryDevice *device);
 
-  RefSiMemoryWindow * getWindow(unsigned index) const;
+  RefSiMemoryWindow *getWindow(unsigned index) const;
 
   refsi_result handleWindowRegWrite(refsi_cmp_register_id reg_idx,
                                     uint64_t value);
 
-private:
+ private:
   RefSiDevice &soc;
   std::vector<refsi_memory_map_entry> memory_map;
   RAMDevice *tcdm = nullptr;

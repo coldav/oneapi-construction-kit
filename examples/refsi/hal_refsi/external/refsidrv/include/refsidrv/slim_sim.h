@@ -19,19 +19,20 @@
 #ifndef _RISCV_SLIM_SIM_H
 #define _RISCV_SLIM_SIM_H
 
+#include <sys/types.h>
+
+#include <bitset>
+#include <functional>
+#include <memory>
+#include <string>
+#include <vector>
+
+#include "common_devices.h"
+#include "fesvr/memif.h"
 #include "riscv/devices.h"
 #include "riscv/log_file.h"
 #include "riscv/processor.h"
 #include "riscv/simif.h"
-#include "fesvr/memif.h"
-#include "common_devices.h"
-
-#include <vector>
-#include <bitset>
-#include <string>
-#include <memory>
-#include <functional>
-#include <sys/types.h>
 
 class mmu_t;
 class debugger_t;
@@ -48,24 +49,23 @@ struct slim_sim_config {
   unsigned pmp_granularity = 0;
   bool log_commits = false;
   const char *log_path = nullptr;
-  const char* isa = nullptr;
-  const char* priv = nullptr;
+  const char *isa = nullptr;
+  const char *priv = nullptr;
   std::string varch;
   uint32_t vlen = 0;
 };
 
-using slim_sim_callback = std::function<void (slim_sim_t &)>;
+using slim_sim_callback = std::function<void(slim_sim_t &)>;
 
 // this class encapsulates the processors and memory in a RISC-V machine.
-class slim_sim_t : public simif_t
-{
-public:
+class slim_sim_t : public simif_t {
+ public:
   slim_sim_t(const slim_sim_config &config, MemoryInterface &mem_if);
   ~slim_sim_t();
 
   bool is_running() const { return !signal_exit; }
 
-  debugger_t & get_debugger() { return *debugger; }
+  debugger_t &get_debugger() { return *debugger; }
   slim_sim_callback get_pre_run_callback() const { return pre_run_callback; }
   void set_pre_run_callback(slim_sim_callback cb) { pre_run_callback = cb; }
 
@@ -87,12 +87,12 @@ public:
   void configure_log(bool enable_log, bool enable_commitlog);
 
   size_t get_current_hart_id() const { return current_hart_id; }
-  processor_t* get_hart(size_t index) const;
+  processor_t *get_hart(size_t index) const;
   size_t get_hart_number() const;
   size_t get_max_active_harts() const { return max_harts; }
   void set_max_active_harts(size_t max_harts);
 
-  trap_handler_t* get_trap_handler() const { return trap_handler; }
+  trap_handler_t *get_trap_handler() const { return trap_handler; }
   void set_trap_handler(trap_handler_t *handler) { trap_handler = handler; }
 
   void set_exited(reg_t exit_code);
@@ -102,27 +102,27 @@ public:
   void proc_reset(unsigned id) override;
 
   // memory-mapped I/O routines
-  char* addr_to_mem(reg_t addr) override;
-  bool mmio_load(reg_t addr, size_t len, uint8_t* bytes) override;
-  bool mmio_store(reg_t addr, size_t len, const uint8_t* bytes) override;
+  char *addr_to_mem(reg_t addr) override;
+  bool mmio_load(reg_t addr, size_t len, uint8_t *bytes) override;
+  bool mmio_store(reg_t addr, size_t len, const uint8_t *bytes) override;
   bool mmio_print(reg_t addr);
   const char *get_symbol(uint64_t addr) override { return "UNKNOWN_SYMBOL"; }
 
  private:
-  std::vector<processor_t*> harts;
+  std::vector<processor_t *> harts;
   size_t max_harts = 0;
   reg_t entry = DRAM_BASE;
   MemoryInterface &mem_if;
   log_file_t log_file;
 
-  void step(size_t n); // step through simulation
+  void step(size_t n);  // step through simulation
   void handle_trap(processor_t *hart);
   void handle_breakpoint(processor_t *hart);
   void return_from_trap(state_t *hart_state, reg_t new_pc);
 
   static const size_t INTERLEAVE = 5000;
-  static const size_t INSNS_PER_RTC_TICK = 100; // 10 MHz clock for 1 BIPS core
-  static const size_t CPU_HZ = 1000000000; // 1GHz CPU
+  static const size_t INSNS_PER_RTC_TICK = 100;  // 10 MHz clock for 1 BIPS core
+  static const size_t CPU_HZ = 1000000000;       // 1GHz CPU
   size_t current_step;
   size_t current_hart_id;
   bool debug;

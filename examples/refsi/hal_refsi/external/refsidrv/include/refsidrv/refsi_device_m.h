@@ -26,7 +26,7 @@ class DMADevice;
 class PerfCounterDevice;
 
 struct RefSiMDevice : public RefSiDevice {
-public:
+ public:
   RefSiMDevice();
 
   /// @brief Shut down the device.

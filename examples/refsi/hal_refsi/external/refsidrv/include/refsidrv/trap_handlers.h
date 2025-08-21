@@ -22,7 +22,7 @@
 class slim_sim_t;
 
 class trap_handler_t {
-public:
+ public:
   virtual ~trap_handler_t();
 
   virtual bool handle_trap(trap_t &trap, reg_t pc, slim_sim_t &sim);
@@ -31,7 +31,7 @@ public:
 class default_trap_handler : public trap_handler_t {
   bool debug = true;
 
-public:
+ public:
   bool handle_trap(trap_t &trap, reg_t pc, slim_sim_t &sim) override;
   virtual bool handle_ecall(trap_t &trap, reg_t pc, slim_sim_t &sim);
 

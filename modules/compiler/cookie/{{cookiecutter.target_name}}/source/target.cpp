@@ -13,48 +13,100 @@
 // under the License.
 //
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-{% if cookiecutter.copyright_name != "" -%}
+{
+  % if cookiecutter.copyright_name != "" - %
+}
 /// Additional changes Copyright (C) {{cookiecutter.copyright_name}}. All Rights
 /// Reserved.
-{% endif -%}
+{
+  % endif - %
+}
 
 #include <hal.h>
-
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/TargetParser/Host.h>
 #include <multi_llvm/multi_llvm.h>
 #include <{{cookiecutter.target_name}}/device_info.h>
 #include <{{cookiecutter.target_name}}/module.h>
 #include <{{cookiecutter.target_name}}/target.h>
+
 #include "{{cookiecutter.target_name}}/module.h"
 
-namespace {{cookiecutter.target_name}} {
-{{cookiecutter.target_name.capitalize()}}Target::{{cookiecutter.target_name.capitalize()}}Target(const compiler::Info *compiler_info,
-                             compiler::Context *context,
-                             compiler::NotifyCallbackFn callback)
-    : BaseAOTTarget(compiler_info, context, callback) {
-  env_debug_prefix = "CA_{{cookiecutter.target_name_capitals}}";
-  llvm_cpu = {{cookiecutter.llvm_cpu}};
-  llvm_triple = {{cookiecutter.llvm_triple}};
-  llvm_features = {{cookiecutter.llvm_features}};
-
-  auto *{{cookiecutter.target_name}}_device_info =
-      static_cast<{{cookiecutter.target_name}}::device_info_s *>(compiler_info->device_info);
-  hal_device_info = {{cookiecutter.target_name}}_device_info->hal_device_info;
+namespace {
+{
+  cookiecutter.target_name
 }
+}  // namespace
+{
+  {
+    {
+      cookiecutter.target_name.capitalize()
+    }
+  }
+  Target::{
+    {
+      cookiecutter.target_name.capitalize()
+    }
+  }
+  Target(const compiler::Info *compiler_info, compiler::Context *context,
+         compiler::NotifyCallbackFn callback)
+      : BaseAOTTarget(compiler_info, context, callback) {
+    env_debug_prefix = "CA_{{cookiecutter.target_name_capitals}}";
+    llvm_cpu = {{cookiecutter.llvm_cpu}};
+    llvm_triple = {{cookiecutter.llvm_triple}};
+    llvm_features = {{cookiecutter.llvm_features}};
 
-{{cookiecutter.target_name.capitalize()}}Target::~{{cookiecutter.target_name.capitalize()}}Target() {}
+    auto * {
+      {
+        cookiecutter.target_name
+      }
+    }
+    _device_info = static_cast < {
+      {
+        cookiecutter.target_name
+      }
+    }
+    ::device_info_s * > (compiler_info->device_info);
+    hal_device_info = {
+      {cookiecutter.target_name}
+    } _device_info->hal_device_info;
+  }
 
-compiler::Result {{cookiecutter.target_name.capitalize()}}Target::initWithBuiltins(
-    std::unique_ptr<llvm::Module> builtins_module) {
-  builtins = std::move(builtins_module);
+  {
+    {
+      cookiecutter.target_name.capitalize()
+    }
+  }
+  Target::~{
+    {
+      cookiecutter.target_name.capitalize()
+    }
+  }
+  Target() {}
 
-  return compiler::Result::SUCCESS;
-}
+  compiler::Result {
+    {
+      cookiecutter.target_name.capitalize()
+    }
+  }
+  Target::initWithBuiltins(std::unique_ptr<llvm::Module> builtins_module) {
+    builtins = std::move(builtins_module);
 
-std::unique_ptr<compiler::Module> {{cookiecutter.target_name.capitalize()}}Target::createModule(uint32_t &num_errors,
-                                                       std::string &log) {
-  return std::make_unique<{{cookiecutter.target_name.capitalize()}}Module>(
-      *this, static_cast<compiler::BaseContext &>(context), num_errors, log);
-}
+    return compiler::Result::SUCCESS;
+  }
+
+  std::unique_ptr<compiler::Module> {
+    {
+      cookiecutter.target_name.capitalize()
+    }
+  }
+  Target::createModule(uint32_t &num_errors, std::string &log) {
+    return std::make_unique < {
+      {
+        cookiecutter.target_name.capitalize()
+      }
+    }
+    Module >
+        (*this, static_cast<compiler::BaseContext &>(context), num_errors, log);
+  }
 }  // namespace {{cookiecutter.target_name}}

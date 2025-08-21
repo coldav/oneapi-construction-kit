@@ -923,7 +923,7 @@ namespace internal {
 // accessible constructors on purpose.  Therefore it's impossible to create a
 // Secret object, which is what we want.
 class Secret {
-  Secret(const Secret&) = delete;
+  Secret(const Secret &) = delete;
 };
 
 // A helper for suppressing warnings on constant condition.  It just
@@ -940,16 +940,16 @@ GTEST_API_ bool IsTrue(bool condition);
 class GTEST_API_ RE {
  public:
   RE(absl::string_view regex) : regex_(regex) {}                  // NOLINT
-  RE(const char* regex) : RE(absl::string_view(regex)) {}         // NOLINT
-  RE(const std::string& regex) : RE(absl::string_view(regex)) {}  // NOLINT
-  RE(const RE& other) : RE(other.pattern()) {}
+  RE(const char *regex) : RE(absl::string_view(regex)) {}         // NOLINT
+  RE(const std::string &regex) : RE(absl::string_view(regex)) {}  // NOLINT
+  RE(const RE &other) : RE(other.pattern()) {}
 
-  const std::string& pattern() const { return regex_.pattern(); }
+  const std::string &pattern() const { return regex_.pattern(); }
 
-  static bool FullMatch(absl::string_view str, const RE& re) {
+  static bool FullMatch(absl::string_view str, const RE &re) {
     return RE2::FullMatch(str, re.regex_);
   }
-  static bool PartialMatch(absl::string_view str, const RE& re) {
+  static bool PartialMatch(absl::string_view str, const RE &re) {
     return RE2::PartialMatch(str, re.regex_);
   }
 
@@ -967,33 +967,33 @@ class GTEST_API_ RE {
  public:
   // A copy constructor is required by the Standard to initialize object
   // references from r-values.
-  RE(const RE& other) { Init(other.pattern()); }
+  RE(const RE &other) { Init(other.pattern()); }
 
   // Constructs an RE from a string.
-  RE(const ::std::string& regex) { Init(regex.c_str()); }  // NOLINT
+  RE(const ::std::string &regex) { Init(regex.c_str()); }  // NOLINT
 
-  RE(const char* regex) { Init(regex); }  // NOLINT
+  RE(const char *regex) { Init(regex); }  // NOLINT
   ~RE();
 
   // Returns the string representation of the regex.
-  const char* pattern() const { return pattern_.c_str(); }
+  const char *pattern() const { return pattern_.c_str(); }
 
   // FullMatch(str, re) returns true if and only if regular expression re
   // matches the entire str.
   // PartialMatch(str, re) returns true if and only if regular expression re
   // matches a substring of str (including str itself).
-  static bool FullMatch(const ::std::string& str, const RE& re) {
+  static bool FullMatch(const ::std::string &str, const RE &re) {
     return FullMatch(str.c_str(), re);
   }
-  static bool PartialMatch(const ::std::string& str, const RE& re) {
+  static bool PartialMatch(const ::std::string &str, const RE &re) {
     return PartialMatch(str.c_str(), re);
   }
 
-  static bool FullMatch(const char* str, const RE& re);
-  static bool PartialMatch(const char* str, const RE& re);
+  static bool FullMatch(const char *str, const RE &re);
+  static bool PartialMatch(const char *str, const RE &re);
 
  private:
-  void Init(const char* regex);
+  void Init(const char *regex);
   std::string pattern_;
   bool is_valid_;
 
@@ -1013,12 +1013,12 @@ GTEST_DISABLE_MSC_WARNINGS_POP_()  // 4251
 
 // Formats a source file path and a line number as they would appear
 // in an error message from the compiler used to compile this code.
-GTEST_API_ ::std::string FormatFileLocation(const char* file, int line);
+GTEST_API_ ::std::string FormatFileLocation(const char *file, int line);
 
 // Formats a file location for compiler-independent XML output.
 // Although this function is not platform dependent, we put it next to
 // FormatFileLocation in order to contrast the two functions.
-GTEST_API_ ::std::string FormatCompilerIndependentFileLocation(const char* file,
+GTEST_API_ ::std::string FormatCompilerIndependentFileLocation(const char *file,
                                                                int line);
 
 // Defines logging utilities:
@@ -1034,18 +1034,18 @@ enum GTestLogSeverity { GTEST_INFO, GTEST_WARNING, GTEST_ERROR, GTEST_FATAL };
 // scope.
 class GTEST_API_ GTestLog {
  public:
-  GTestLog(GTestLogSeverity severity, const char* file, int line);
+  GTestLog(GTestLogSeverity severity, const char *file, int line);
 
   // Flushes the buffers and, if severity is GTEST_FATAL, aborts the program.
   ~GTestLog();
 
-  ::std::ostream& GetStream() { return ::std::cerr; }
+  ::std::ostream &GetStream() { return ::std::cerr; }
 
  private:
   const GTestLogSeverity severity_;
 
-  GTestLog(const GTestLog&) = delete;
-  GTestLog& operator=(const GTestLog&) = delete;
+  GTestLog(const GTestLog &) = delete;
+  GTestLog &operator=(const GTestLog &) = delete;
 };
 
 #if !defined(GTEST_LOG_)
@@ -1105,11 +1105,11 @@ inline void FlushInfoLog() { fflush(nullptr); }
 // standard, and necessary so that "T" can always bind to "const T&".
 template <typename T>
 struct ConstRef {
-  typedef const T& type;
+  typedef const T &type;
 };
 template <typename T>
-struct ConstRef<T&> {
-  typedef T& type;
+struct ConstRef<T &> {
+  typedef T &type;
 };
 
 // The argument T must depend on some template parameters.
@@ -1147,13 +1147,13 @@ inline To ImplicitCast_(To x) {
 // When RTTI is available, the function performs a runtime
 // check to enforce this.
 template <class Derived, class Base>
-Derived* CheckedDowncastToActualType(Base* base) {
+Derived *CheckedDowncastToActualType(Base *base) {
   static_assert(std::is_base_of<Base, Derived>::value,
                 "target type not derived from source type");
 #if GTEST_HAS_RTTI
-  GTEST_CHECK_(base == nullptr || dynamic_cast<Derived*>(base) != nullptr);
+  GTEST_CHECK_(base == nullptr || dynamic_cast<Derived *>(base) != nullptr);
 #endif
-  return static_cast<Derived*>(base);
+  return static_cast<Derived *>(base);
 }
 
 #if GTEST_HAS_STREAM_REDIRECTION
@@ -1171,10 +1171,10 @@ GTEST_API_ std::string GetCapturedStderr();
 
 #endif  // GTEST_HAS_STREAM_REDIRECTION
 // Returns the size (in bytes) of a file.
-GTEST_API_ size_t GetFileSize(FILE* file);
+GTEST_API_ size_t GetFileSize(FILE *file);
 
 // Reads the entire content of a file as a string.
-GTEST_API_ std::string ReadEntireFile(FILE* file);
+GTEST_API_ std::string ReadEntireFile(FILE *file);
 
 // All command line arguments.
 GTEST_API_ std::vector<std::string> GetArgvs();
@@ -1183,8 +1183,8 @@ GTEST_API_ std::vector<std::string> GetArgvs();
 
 std::vector<std::string> GetInjectableArgvs();
 // Deprecated: pass the args vector by value instead.
-void SetInjectableArgvs(const std::vector<std::string>* new_argvs);
-void SetInjectableArgvs(const std::vector<std::string>& new_argvs);
+void SetInjectableArgvs(const std::vector<std::string> *new_argvs);
+void SetInjectableArgvs(const std::vector<std::string> &new_argvs);
 void ClearInjectableArgvs();
 
 #endif  // GTEST_HAS_DEATH_TEST
@@ -1202,7 +1202,7 @@ class GTEST_API_ AutoHandle {
   // undesirable because it defines a lot of symbols and macros that tend to
   // conflict with client code. This assumption is verified by
   // WindowsTypesTest.HANDLEIsVoidStar.
-  typedef void* Handle;
+  typedef void *Handle;
   AutoHandle();
   explicit AutoHandle(Handle handle);
 
@@ -1219,8 +1219,8 @@ class GTEST_API_ AutoHandle {
 
   Handle handle_;
 
-  AutoHandle(const AutoHandle&) = delete;
-  AutoHandle& operator=(const AutoHandle&) = delete;
+  AutoHandle(const AutoHandle &) = delete;
+  AutoHandle &operator=(const AutoHandle &) = delete;
 };
 #endif
 
@@ -1242,8 +1242,8 @@ GTEST_DISABLE_MSC_WARNINGS_PUSH_(4251 \
 class GTEST_API_ Notification {
  public:
   Notification() : notified_(false) {}
-  Notification(const Notification&) = delete;
-  Notification& operator=(const Notification&) = delete;
+  Notification(const Notification &) = delete;
+  Notification &operator=(const Notification &) = delete;
 
   // Notifies all threads created with this notification to start. Must
   // be called from the controller thread.
@@ -1290,8 +1290,8 @@ class ThreadWithParamBase {
 // example, SunStudio) treat them as different types.  Since class methods
 // cannot be defined with C-linkage we need to define a free C-function to
 // pass into pthread_create().
-extern "C" inline void* ThreadFuncWithCLinkage(void* thread) {
-  static_cast<ThreadWithParamBase*>(thread)->Run();
+extern "C" inline void *ThreadFuncWithCLinkage(void *thread) {
+  static_cast<ThreadWithParamBase *>(thread)->Run();
   return nullptr;
 }
 
@@ -1312,12 +1312,12 @@ class ThreadWithParam : public ThreadWithParamBase {
  public:
   typedef void UserThreadFunc(T);
 
-  ThreadWithParam(UserThreadFunc* func, T param, Notification* thread_can_start)
+  ThreadWithParam(UserThreadFunc *func, T param, Notification *thread_can_start)
       : func_(func),
         param_(param),
         thread_can_start_(thread_can_start),
         finished_(false) {
-    ThreadWithParamBase* const base = this;
+    ThreadWithParamBase *const base = this;
     // The thread can be created only after all fields except thread_
     // have been initialized.
     GTEST_CHECK_POSIX_SUCCESS_(
@@ -1338,17 +1338,17 @@ class ThreadWithParam : public ThreadWithParamBase {
   }
 
  private:
-  UserThreadFunc* const func_;  // User-supplied thread function.
+  UserThreadFunc *const func_;  // User-supplied thread function.
   const T param_;  // User-supplied parameter to the thread function.
   // When non-NULL, used to block execution until the controller thread
   // notifies.
-  Notification* const thread_can_start_;
+  Notification *const thread_can_start_;
   bool finished_;  // true if and only if we know that the thread function has
                    // finished.
   pthread_t thread_;  // The native thread object.
 
-  ThreadWithParam(const ThreadWithParam&) = delete;
-  ThreadWithParam& operator=(const ThreadWithParam&) = delete;
+  ThreadWithParam(const ThreadWithParam &) = delete;
+  ThreadWithParam &operator=(const ThreadWithParam &) = delete;
 };
 #endif  // !GTEST_OS_WINDOWS && GTEST_HAS_PTHREAD ||
         // GTEST_HAS_MUTEX_AND_THREAD_LOCAL_
@@ -1410,10 +1410,10 @@ class GTEST_API_ Mutex {
   // by the linker.
   MutexType type_;
   long critical_section_init_phase_;  // NOLINT
-  GTEST_CRITICAL_SECTION* critical_section_;
+  GTEST_CRITICAL_SECTION *critical_section_;
 
-  Mutex(const Mutex&) = delete;
-  Mutex& operator=(const Mutex&) = delete;
+  Mutex(const Mutex &) = delete;
+  Mutex &operator=(const Mutex &) = delete;
 };
 
 #define GTEST_DECLARE_STATIC_MUTEX_(mutex) \
@@ -1429,15 +1429,15 @@ class GTEST_API_ Mutex {
 // "MutexLock l(&mu)".  Hence the typedef trick below.
 class GTestMutexLock {
  public:
-  explicit GTestMutexLock(Mutex* mutex) : mutex_(mutex) { mutex_->Lock(); }
+  explicit GTestMutexLock(Mutex *mutex) : mutex_(mutex) { mutex_->Lock(); }
 
   ~GTestMutexLock() { mutex_->Unlock(); }
 
  private:
-  Mutex* const mutex_;
+  Mutex *const mutex_;
 
-  GTestMutexLock(const GTestMutexLock&) = delete;
-  GTestMutexLock& operator=(const GTestMutexLock&) = delete;
+  GTestMutexLock(const GTestMutexLock &) = delete;
+  GTestMutexLock &operator=(const GTestMutexLock &) = delete;
 };
 
 typedef GTestMutexLock MutexLock;
@@ -1457,15 +1457,15 @@ class ThreadLocalBase {
   // this ThreadLocal<T>'s constructor and returns it.  It is the caller's
   // responsibility not to call this when the ThreadLocal<T> instance already
   // has a value on the current thread.
-  virtual ThreadLocalValueHolderBase* NewValueForCurrentThread() const = 0;
+  virtual ThreadLocalValueHolderBase *NewValueForCurrentThread() const = 0;
 
  protected:
   ThreadLocalBase() {}
   virtual ~ThreadLocalBase() {}
 
  private:
-  ThreadLocalBase(const ThreadLocalBase&) = delete;
-  ThreadLocalBase& operator=(const ThreadLocalBase&) = delete;
+  ThreadLocalBase(const ThreadLocalBase &) = delete;
+  ThreadLocalBase &operator=(const ThreadLocalBase &) = delete;
 };
 
 // Maps a thread to a set of ThreadLocals that have values instantiated on that
@@ -1475,12 +1475,12 @@ class GTEST_API_ ThreadLocalRegistry {
  public:
   // Registers thread_local_instance as having value on the current thread.
   // Returns a value that can be used to identify the thread from other threads.
-  static ThreadLocalValueHolderBase* GetValueOnCurrentThread(
-      const ThreadLocalBase* thread_local_instance);
+  static ThreadLocalValueHolderBase *GetValueOnCurrentThread(
+      const ThreadLocalBase *thread_local_instance);
 
   // Invoked when a ThreadLocal instance is destroyed.
   static void OnThreadLocalDestroyed(
-      const ThreadLocalBase* thread_local_instance);
+      const ThreadLocalBase *thread_local_instance);
 };
 
 class GTEST_API_ ThreadWithParamBase {
@@ -1494,7 +1494,7 @@ class GTEST_API_ ThreadWithParamBase {
     virtual void Run() = 0;
   };
 
-  ThreadWithParamBase(Runnable* runnable, Notification* thread_can_start);
+  ThreadWithParamBase(Runnable *runnable, Notification *thread_can_start);
   virtual ~ThreadWithParamBase();
 
  private:
@@ -1507,27 +1507,27 @@ class ThreadWithParam : public ThreadWithParamBase {
  public:
   typedef void UserThreadFunc(T);
 
-  ThreadWithParam(UserThreadFunc* func, T param, Notification* thread_can_start)
+  ThreadWithParam(UserThreadFunc *func, T param, Notification *thread_can_start)
       : ThreadWithParamBase(new RunnableImpl(func, param), thread_can_start) {}
   virtual ~ThreadWithParam() {}
 
  private:
   class RunnableImpl : public Runnable {
    public:
-    RunnableImpl(UserThreadFunc* func, T param) : func_(func), param_(param) {}
+    RunnableImpl(UserThreadFunc *func, T param) : func_(func), param_(param) {}
     virtual ~RunnableImpl() {}
     virtual void Run() { func_(param_); }
 
    private:
-    UserThreadFunc* const func_;
+    UserThreadFunc *const func_;
     const T param_;
 
-    RunnableImpl(const RunnableImpl&) = delete;
-    RunnableImpl& operator=(const RunnableImpl&) = delete;
+    RunnableImpl(const RunnableImpl &) = delete;
+    RunnableImpl &operator=(const RunnableImpl &) = delete;
   };
 
-  ThreadWithParam(const ThreadWithParam&) = delete;
-  ThreadWithParam& operator=(const ThreadWithParam&) = delete;
+  ThreadWithParam(const ThreadWithParam &) = delete;
+  ThreadWithParam &operator=(const ThreadWithParam &) = delete;
 };
 
 // Implements thread-local storage on Windows systems.
@@ -1561,15 +1561,15 @@ template <typename T>
 class ThreadLocal : public ThreadLocalBase {
  public:
   ThreadLocal() : default_factory_(new DefaultValueHolderFactory()) {}
-  explicit ThreadLocal(const T& value)
+  explicit ThreadLocal(const T &value)
       : default_factory_(new InstanceValueHolderFactory(value)) {}
 
   ~ThreadLocal() override { ThreadLocalRegistry::OnThreadLocalDestroyed(this); }
 
-  T* pointer() { return GetOrCreateValue(); }
-  const T* pointer() const { return GetOrCreateValue(); }
-  const T& get() const { return *pointer(); }
-  void set(const T& value) { *pointer() = value; }
+  T *pointer() { return GetOrCreateValue(); }
+  const T *pointer() const { return GetOrCreateValue(); }
+  const T &get() const { return *pointer(); }
+  void set(const T &value) { *pointer() = value; }
 
  private:
   // Holds a value of T.  Can be deleted via its base class without the caller
@@ -1577,23 +1577,23 @@ class ThreadLocal : public ThreadLocalBase {
   class ValueHolder : public ThreadLocalValueHolderBase {
    public:
     ValueHolder() : value_() {}
-    explicit ValueHolder(const T& value) : value_(value) {}
+    explicit ValueHolder(const T &value) : value_(value) {}
 
-    T* pointer() { return &value_; }
+    T *pointer() { return &value_; }
 
    private:
     T value_;
-    ValueHolder(const ValueHolder&) = delete;
-    ValueHolder& operator=(const ValueHolder&) = delete;
+    ValueHolder(const ValueHolder &) = delete;
+    ValueHolder &operator=(const ValueHolder &) = delete;
   };
 
-  T* GetOrCreateValue() const {
-    return static_cast<ValueHolder*>(
+  T *GetOrCreateValue() const {
+    return static_cast<ValueHolder *>(
                ThreadLocalRegistry::GetValueOnCurrentThread(this))
         ->pointer();
   }
 
-  ThreadLocalValueHolderBase* NewValueForCurrentThread() const override {
+  ThreadLocalValueHolderBase *NewValueForCurrentThread() const override {
     return default_factory_->MakeNewHolder();
   }
 
@@ -1601,43 +1601,43 @@ class ThreadLocal : public ThreadLocalBase {
    public:
     ValueHolderFactory() {}
     virtual ~ValueHolderFactory() {}
-    virtual ValueHolder* MakeNewHolder() const = 0;
+    virtual ValueHolder *MakeNewHolder() const = 0;
 
    private:
-    ValueHolderFactory(const ValueHolderFactory&) = delete;
-    ValueHolderFactory& operator=(const ValueHolderFactory&) = delete;
+    ValueHolderFactory(const ValueHolderFactory &) = delete;
+    ValueHolderFactory &operator=(const ValueHolderFactory &) = delete;
   };
 
   class DefaultValueHolderFactory : public ValueHolderFactory {
    public:
     DefaultValueHolderFactory() {}
-    ValueHolder* MakeNewHolder() const override { return new ValueHolder(); }
+    ValueHolder *MakeNewHolder() const override { return new ValueHolder(); }
 
    private:
-    DefaultValueHolderFactory(const DefaultValueHolderFactory&) = delete;
-    DefaultValueHolderFactory& operator=(const DefaultValueHolderFactory&) =
+    DefaultValueHolderFactory(const DefaultValueHolderFactory &) = delete;
+    DefaultValueHolderFactory &operator=(const DefaultValueHolderFactory &) =
         delete;
   };
 
   class InstanceValueHolderFactory : public ValueHolderFactory {
    public:
-    explicit InstanceValueHolderFactory(const T& value) : value_(value) {}
-    ValueHolder* MakeNewHolder() const override {
+    explicit InstanceValueHolderFactory(const T &value) : value_(value) {}
+    ValueHolder *MakeNewHolder() const override {
       return new ValueHolder(value_);
     }
 
    private:
     const T value_;  // The value for each thread.
 
-    InstanceValueHolderFactory(const InstanceValueHolderFactory&) = delete;
-    InstanceValueHolderFactory& operator=(const InstanceValueHolderFactory&) =
+    InstanceValueHolderFactory(const InstanceValueHolderFactory &) = delete;
+    InstanceValueHolderFactory &operator=(const InstanceValueHolderFactory &) =
         delete;
   };
 
   std::unique_ptr<ValueHolderFactory> default_factory_;
 
-  ThreadLocal(const ThreadLocal&) = delete;
-  ThreadLocal& operator=(const ThreadLocal&) = delete;
+  ThreadLocal(const ThreadLocal &) = delete;
+  ThreadLocal &operator=(const ThreadLocal &) = delete;
 };
 
 #elif GTEST_HAS_PTHREAD
@@ -1710,8 +1710,8 @@ class Mutex : public MutexBase {
   ~Mutex() { GTEST_CHECK_POSIX_SUCCESS_(pthread_mutex_destroy(&mutex_)); }
 
  private:
-  Mutex(const Mutex&) = delete;
-  Mutex& operator=(const Mutex&) = delete;
+  Mutex(const Mutex &) = delete;
+  Mutex &operator=(const Mutex &) = delete;
 };
 
 // We cannot name this class MutexLock because the ctor declaration would
@@ -1721,15 +1721,15 @@ class Mutex : public MutexBase {
 // "MutexLock l(&mu)".  Hence the typedef trick below.
 class GTestMutexLock {
  public:
-  explicit GTestMutexLock(MutexBase* mutex) : mutex_(mutex) { mutex_->Lock(); }
+  explicit GTestMutexLock(MutexBase *mutex) : mutex_(mutex) { mutex_->Lock(); }
 
   ~GTestMutexLock() { mutex_->Unlock(); }
 
  private:
-  MutexBase* const mutex_;
+  MutexBase *const mutex_;
 
-  GTestMutexLock(const GTestMutexLock&) = delete;
-  GTestMutexLock& operator=(const GTestMutexLock&) = delete;
+  GTestMutexLock(const GTestMutexLock &) = delete;
+  GTestMutexLock &operator=(const GTestMutexLock &) = delete;
 };
 
 typedef GTestMutexLock MutexLock;
@@ -1747,8 +1747,8 @@ class GTEST_API_ ThreadLocalValueHolderBase {
 
 // Called by pthread to delete thread-local data stored by
 // pthread_setspecific().
-extern "C" inline void DeleteThreadLocalValue(void* value_holder) {
-  delete static_cast<ThreadLocalValueHolderBase*>(value_holder);
+extern "C" inline void DeleteThreadLocalValue(void *value_holder) {
+  delete static_cast<ThreadLocalValueHolderBase *>(value_holder);
 }
 
 // Implements thread-local storage on pthreads-based systems.
@@ -1757,7 +1757,7 @@ class GTEST_API_ ThreadLocal {
  public:
   ThreadLocal()
       : key_(CreateKey()), default_factory_(new DefaultValueHolderFactory()) {}
-  explicit ThreadLocal(const T& value)
+  explicit ThreadLocal(const T &value)
       : key_(CreateKey()),
         default_factory_(new InstanceValueHolderFactory(value)) {}
 
@@ -1770,24 +1770,24 @@ class GTEST_API_ ThreadLocal {
     GTEST_CHECK_POSIX_SUCCESS_(pthread_key_delete(key_));
   }
 
-  T* pointer() { return GetOrCreateValue(); }
-  const T* pointer() const { return GetOrCreateValue(); }
-  const T& get() const { return *pointer(); }
-  void set(const T& value) { *pointer() = value; }
+  T *pointer() { return GetOrCreateValue(); }
+  const T *pointer() const { return GetOrCreateValue(); }
+  const T &get() const { return *pointer(); }
+  void set(const T &value) { *pointer() = value; }
 
  private:
   // Holds a value of type T.
   class ValueHolder : public ThreadLocalValueHolderBase {
    public:
     ValueHolder() : value_() {}
-    explicit ValueHolder(const T& value) : value_(value) {}
+    explicit ValueHolder(const T &value) : value_(value) {}
 
-    T* pointer() { return &value_; }
+    T *pointer() { return &value_; }
 
    private:
     T value_;
-    ValueHolder(const ValueHolder&) = delete;
-    ValueHolder& operator=(const ValueHolder&) = delete;
+    ValueHolder(const ValueHolder &) = delete;
+    ValueHolder &operator=(const ValueHolder &) = delete;
   };
 
   static pthread_key_t CreateKey() {
@@ -1799,15 +1799,15 @@ class GTEST_API_ ThreadLocal {
     return key;
   }
 
-  T* GetOrCreateValue() const {
-    ThreadLocalValueHolderBase* const holder =
-        static_cast<ThreadLocalValueHolderBase*>(pthread_getspecific(key_));
+  T *GetOrCreateValue() const {
+    ThreadLocalValueHolderBase *const holder =
+        static_cast<ThreadLocalValueHolderBase *>(pthread_getspecific(key_));
     if (holder != nullptr) {
       return CheckedDowncastToActualType<ValueHolder>(holder)->pointer();
     }
 
-    ValueHolder* const new_holder = default_factory_->MakeNewHolder();
-    ThreadLocalValueHolderBase* const holder_base = new_holder;
+    ValueHolder *const new_holder = default_factory_->MakeNewHolder();
+    ThreadLocalValueHolderBase *const holder_base = new_holder;
     GTEST_CHECK_POSIX_SUCCESS_(pthread_setspecific(key_, holder_base));
     return new_holder->pointer();
   }
@@ -1816,36 +1816,36 @@ class GTEST_API_ ThreadLocal {
    public:
     ValueHolderFactory() = default;
     virtual ~ValueHolderFactory() = default;
-    virtual ValueHolder* MakeNewHolder() const = 0;
+    virtual ValueHolder *MakeNewHolder() const = 0;
 
    private:
-    ValueHolderFactory(const ValueHolderFactory&) = delete;
-    ValueHolderFactory& operator=(const ValueHolderFactory&) = delete;
+    ValueHolderFactory(const ValueHolderFactory &) = delete;
+    ValueHolderFactory &operator=(const ValueHolderFactory &) = delete;
   };
 
   class DefaultValueHolderFactory : public ValueHolderFactory {
    public:
     DefaultValueHolderFactory() = default;
-    ValueHolder* MakeNewHolder() const override { return new ValueHolder(); }
+    ValueHolder *MakeNewHolder() const override { return new ValueHolder(); }
 
    private:
-    DefaultValueHolderFactory(const DefaultValueHolderFactory&) = delete;
-    DefaultValueHolderFactory& operator=(const DefaultValueHolderFactory&) =
+    DefaultValueHolderFactory(const DefaultValueHolderFactory &) = delete;
+    DefaultValueHolderFactory &operator=(const DefaultValueHolderFactory &) =
         delete;
   };
 
   class InstanceValueHolderFactory : public ValueHolderFactory {
    public:
-    explicit InstanceValueHolderFactory(const T& value) : value_(value) {}
-    ValueHolder* MakeNewHolder() const override {
+    explicit InstanceValueHolderFactory(const T &value) : value_(value) {}
+    ValueHolder *MakeNewHolder() const override {
       return new ValueHolder(value_);
     }
 
    private:
     const T value_;  // The value for each thread.
 
-    InstanceValueHolderFactory(const InstanceValueHolderFactory&) = delete;
-    InstanceValueHolderFactory& operator=(const InstanceValueHolderFactory&) =
+    InstanceValueHolderFactory(const InstanceValueHolderFactory &) = delete;
+    InstanceValueHolderFactory &operator=(const InstanceValueHolderFactory &) =
         delete;
   };
 
@@ -1853,8 +1853,8 @@ class GTEST_API_ ThreadLocal {
   const pthread_key_t key_;
   std::unique_ptr<ValueHolderFactory> default_factory_;
 
-  ThreadLocal(const ThreadLocal&) = delete;
-  ThreadLocal& operator=(const ThreadLocal&) = delete;
+  ThreadLocal(const ThreadLocal &) = delete;
+  ThreadLocal &operator=(const ThreadLocal &) = delete;
 };
 
 #endif  // GTEST_HAS_MUTEX_AND_THREAD_LOCAL_
@@ -1886,7 +1886,7 @@ class Mutex {
 // "MutexLock l(&mu)".  Hence the typedef trick below.
 class GTestMutexLock {
  public:
-  explicit GTestMutexLock(Mutex*) {}  // NOLINT
+  explicit GTestMutexLock(Mutex *) {}  // NOLINT
 };
 
 typedef GTestMutexLock MutexLock;
@@ -1895,11 +1895,11 @@ template <typename T>
 class GTEST_API_ ThreadLocal {
  public:
   ThreadLocal() : value_() {}
-  explicit ThreadLocal(const T& value) : value_(value) {}
-  T* pointer() { return &value_; }
-  const T* pointer() const { return &value_; }
-  const T& get() const { return value_; }
-  void set(const T& value) { value_ = value; }
+  explicit ThreadLocal(const T &value) : value_(value) {}
+  T *pointer() { return &value_; }
+  const T *pointer() const { return &value_; }
+  const T &get() const { return value_; }
+  void set(const T &value) { value_ = value; }
 
  private:
   T value_;
@@ -1993,40 +1993,40 @@ namespace posix {
 typedef struct _stat StatStruct;
 
 #ifdef GTEST_OS_WINDOWS_MOBILE
-inline int FileNo(FILE* file) { return reinterpret_cast<int>(_fileno(file)); }
+inline int FileNo(FILE *file) { return reinterpret_cast<int>(_fileno(file)); }
 // Stat(), RmDir(), and IsDir() are not needed on Windows CE at this
 // time and thus not defined there.
 #else
-inline int FileNo(FILE* file) { return _fileno(file); }
-inline int Stat(const char* path, StatStruct* buf) { return _stat(path, buf); }
-inline int RmDir(const char* dir) { return _rmdir(dir); }
-inline bool IsDir(const StatStruct& st) { return (_S_IFDIR & st.st_mode) != 0; }
+inline int FileNo(FILE *file) { return _fileno(file); }
+inline int Stat(const char *path, StatStruct *buf) { return _stat(path, buf); }
+inline int RmDir(const char *dir) { return _rmdir(dir); }
+inline bool IsDir(const StatStruct &st) { return (_S_IFDIR & st.st_mode) != 0; }
 #endif  // GTEST_OS_WINDOWS_MOBILE
 
 #elif defined(GTEST_OS_ESP8266)
 typedef struct stat StatStruct;
 
-inline int FileNo(FILE* file) { return fileno(file); }
-inline int Stat(const char* path, StatStruct* buf) {
+inline int FileNo(FILE *file) { return fileno(file); }
+inline int Stat(const char *path, StatStruct *buf) {
   // stat function not implemented on ESP8266
   return 0;
 }
-inline int RmDir(const char* dir) { return rmdir(dir); }
-inline bool IsDir(const StatStruct& st) { return S_ISDIR(st.st_mode); }
+inline int RmDir(const char *dir) { return rmdir(dir); }
+inline bool IsDir(const StatStruct &st) { return S_ISDIR(st.st_mode); }
 
 #else
 
 typedef struct stat StatStruct;
 
-inline int FileNo(FILE* file) { return fileno(file); }
-inline int Stat(const char* path, StatStruct* buf) { return stat(path, buf); }
+inline int FileNo(FILE *file) { return fileno(file); }
+inline int Stat(const char *path, StatStruct *buf) { return stat(path, buf); }
 #ifdef GTEST_OS_QURT
 // QuRT doesn't support any directory functions, including rmdir
-inline int RmDir(const char*) { return 0; }
+inline int RmDir(const char *) { return 0; }
 #else
-inline int RmDir(const char* dir) { return rmdir(dir); }
+inline int RmDir(const char *dir) { return rmdir(dir); }
 #endif
-inline bool IsDir(const StatStruct& st) { return S_ISDIR(st.st_mode); }
+inline bool IsDir(const StatStruct &st) { return S_ISDIR(st.st_mode); }
 
 #endif  // GTEST_OS_WINDOWS
 #endif  // GTEST_HAS_FILE_SYSTEM
@@ -2037,7 +2037,7 @@ inline bool IsDir(const StatStruct& st) { return S_ISDIR(st.st_mode); }
 
 #ifdef __BORLANDC__
 inline int DoIsATTY(int fd) { return isatty(fd); }
-inline int StrCaseCmp(const char* s1, const char* s2) {
+inline int StrCaseCmp(const char *s1, const char *s2) {
   return stricmp(s1, s2);
 }
 #else  // !__BORLANDC__
@@ -2048,7 +2048,7 @@ inline int DoIsATTY(int /* fd */) { return 0; }
 #else
 inline int DoIsATTY(int fd) { return _isatty(fd); }
 #endif  // GTEST_OS_WINDOWS_MOBILE
-inline int StrCaseCmp(const char* s1, const char* s2) {
+inline int StrCaseCmp(const char *s1, const char *s2) {
   return _stricmp(s1, s2);
 }
 #endif  // __BORLANDC__
@@ -2056,7 +2056,7 @@ inline int StrCaseCmp(const char* s1, const char* s2) {
 #else
 
 inline int DoIsATTY(int fd) { return isatty(fd); }
-inline int StrCaseCmp(const char* s1, const char* s2) {
+inline int StrCaseCmp(const char *s1, const char *s2) {
   return strcasecmp(s1, s2);
 }
 
@@ -2084,9 +2084,9 @@ GTEST_DISABLE_MSC_DEPRECATED_PUSH_()
 #if !defined(GTEST_OS_WINDOWS_MOBILE) && !defined(GTEST_OS_WINDOWS_PHONE) && \
     !defined(GTEST_OS_WINDOWS_RT) && !defined(GTEST_OS_ESP8266) &&           \
     !defined(GTEST_OS_XTENSA) && !defined(GTEST_OS_QURT)
-inline int ChDir(const char* dir) { return chdir(dir); }
+inline int ChDir(const char *dir) { return chdir(dir); }
 #endif
-inline FILE* FOpen(const char* path, const char* mode) {
+inline FILE *FOpen(const char *path, const char *mode) {
 #if defined(GTEST_OS_WINDOWS) && !defined(GTEST_OS_WINDOWS_MINGW)
   struct wchar_codecvt : public std::codecvt<wchar_t, char, std::mbstate_t> {};
   std::wstring_convert<wchar_codecvt> converter;
@@ -2098,17 +2098,17 @@ inline FILE* FOpen(const char* path, const char* mode) {
 #endif  // GTEST_OS_WINDOWS && !GTEST_OS_WINDOWS_MINGW
 }
 #if !defined(GTEST_OS_WINDOWS_MOBILE) && !defined(GTEST_OS_QURT)
-inline FILE* FReopen(const char* path, const char* mode, FILE* stream) {
+inline FILE *FReopen(const char *path, const char *mode, FILE *stream) {
   return freopen(path, mode, stream);
 }
-inline FILE* FDOpen(int fd, const char* mode) { return fdopen(fd, mode); }
+inline FILE *FDOpen(int fd, const char *mode) { return fdopen(fd, mode); }
 #endif  // !GTEST_OS_WINDOWS_MOBILE && !GTEST_OS_QURT
-inline int FClose(FILE* fp) { return fclose(fp); }
+inline int FClose(FILE *fp) { return fclose(fp); }
 #if !defined(GTEST_OS_WINDOWS_MOBILE) && !defined(GTEST_OS_QURT)
-inline int Read(int fd, void* buf, unsigned int count) {
+inline int Read(int fd, void *buf, unsigned int count) {
   return static_cast<int>(read(fd, buf, count));
 }
-inline int Write(int fd, const void* buf, unsigned int count) {
+inline int Write(int fd, const void *buf, unsigned int count) {
   return static_cast<int>(write(fd, buf, count));
 }
 inline int Close(int fd) { return close(fd); }
@@ -2116,10 +2116,10 @@ inline int Close(int fd) { return close(fd); }
 #endif  // GTEST_HAS_FILE_SYSTEM
 
 #if !defined(GTEST_OS_WINDOWS_MOBILE) && !defined(GTEST_OS_QURT)
-inline const char* StrError(int errnum) { return strerror(errnum); }
+inline const char *StrError(int errnum) { return strerror(errnum); }
 #endif  // !GTEST_OS_WINDOWS_MOBILE && !GTEST_OS_QURT
 
-inline const char* GetEnv(const char* name) {
+inline const char *GetEnv(const char *name) {
 #if defined(GTEST_OS_WINDOWS_MOBILE) || defined(GTEST_OS_WINDOWS_PHONE) || \
     defined(GTEST_OS_ESP8266) || defined(GTEST_OS_XTENSA) ||               \
     defined(GTEST_OS_QURT)
@@ -2129,7 +2129,7 @@ inline const char* GetEnv(const char* name) {
 #elif defined(__BORLANDC__) || defined(__SunOS_5_8) || defined(__SunOS_5_9)
   // Environment variables which we programmatically clear will be set to the
   // empty string rather than unset (NULL).  Handle that case.
-  const char* const env = getenv(name);
+  const char *const env = getenv(name);
   return (env != nullptr && env[0] != '\0') ? env : nullptr;
 #else
   return getenv(name);
@@ -2305,15 +2305,15 @@ using TimeInMillis = int64_t;  // Represents time in milliseconds.
 // Parses 'str' for a 32-bit signed integer.  If successful, writes the result
 // to *value and returns true; otherwise leaves *value unchanged and returns
 // false.
-GTEST_API_ bool ParseInt32(const Message& src_text, const char* str,
-                           int32_t* value);
+GTEST_API_ bool ParseInt32(const Message &src_text, const char *str,
+                           int32_t *value);
 
 // Parses a bool/int32_t/string from the environment variable
 // corresponding to the given Google Test flag.
-bool BoolFromGTestEnv(const char* flag, bool default_val);
-GTEST_API_ int32_t Int32FromGTestEnv(const char* flag, int32_t default_val);
+bool BoolFromGTestEnv(const char *flag, bool default_val);
+GTEST_API_ int32_t Int32FromGTestEnv(const char *flag, int32_t default_val);
 std::string OutputFlagAlsoCheckEnvVar();
-const char* StringFromGTestEnv(const char* flag, const char* default_val);
+const char *StringFromGTestEnv(const char *flag, const char *default_val);
 
 }  // namespace internal
 }  // namespace testing

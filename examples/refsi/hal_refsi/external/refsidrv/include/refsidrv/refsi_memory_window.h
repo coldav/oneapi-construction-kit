@@ -56,7 +56,7 @@ struct RefSiMemoryWindowConfig {
 /// memory device. This enables the creation of memory 'windows' into the
 /// system's memory map which point to another area of memory.
 class RefSiMemoryWindow : public MemoryDeviceBase {
-public:
+ public:
   RefSiMemoryWindow(RefSiMemoryController &mem_ctl) : mem_ctl(mem_ctl) {}
 
   bool isMapped() const { return mapped_device != nullptr; }
@@ -65,20 +65,20 @@ public:
   refsi_result enableWindow(MemoryController &mem_if);
   refsi_result disableWindow(MemoryController &mem_if);
 
-  RefSiMemoryWindowConfig & getConfig() { return config; }
+  RefSiMemoryWindowConfig &getConfig() { return config; }
 
   size_t mem_size() const override;
 
-  bool load(reg_t addr, size_t len, uint8_t* bytes, unit_id_t unit) override;
-  bool store(reg_t addr, size_t len, const uint8_t* bytes,
+  bool load(reg_t addr, size_t len, uint8_t *bytes, unit_id_t unit) override;
+  bool store(reg_t addr, size_t len, const uint8_t *bytes,
              unit_id_t unit) override;
   uint8_t *addr_to_mem(reg_t addr, size_t size, unit_id_t unit) override;
 
   static bool splitCmpRegister(refsi_cmp_register_id reg_idx,
-                              refsi_cmp_register_id &canon_reg_idx,
-                              uint32_t &window_id);
+                               refsi_cmp_register_id &canon_reg_idx,
+                               uint32_t &window_id);
 
-private:
+ private:
   refsi_result getEffectiveAddress(reg_t addr, unit_id_t unit,
                                    refsi_addr_t &eff_address);
 

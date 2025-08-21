@@ -99,8 +99,7 @@ uintptr_t start_dma(void *dst, const void *src, size_t size_in_bytes,
   return xfer_id;
 }
 
-void wait_dma(uintptr_t xfer_id, struct exec_state *state) { /* No-op */
-}
+void wait_dma(uintptr_t xfer_id, struct exec_state *state) { /* No-op */ }
 #endif  // defined(HAL_REFSI_TARGET_M1)
 
 int vsnprint(char *out, size_t n, const char *s, va_list vl) {
@@ -135,8 +134,7 @@ int vsnprint(char *out, size_t n, const char *s, va_list vl) {
             if (++pos < n) out[pos - 1] = '-';
           }
           long digits = 1;
-          for (long nn = num; nn /= 10; digits++)
-            ;
+          for (long nn = num; nn /= 10; digits++);
           for (int i = digits - 1; i >= 0; i--) {
             if (pos + i + 1 < n) out[pos + i] = '0' + (num % 10);
             num /= 10;

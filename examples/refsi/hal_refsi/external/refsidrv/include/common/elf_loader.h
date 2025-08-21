@@ -18,20 +18,16 @@
 #define _REFSIDRV_COMMON_ELF_LOADER_H
 
 #include <map>
-#include <vector>
 #include <string>
+#include <vector>
 
-#include "riscv/devices.h"
 #include "common_devices.h"
 #include "fesvr/elf.h"
+#include "riscv/devices.h"
 
 using symbol_map = std::map<std::string, reg_t>;
 
-enum class elf_machine {
-  unknown = 0,
-  riscv_rv32 = 1,
-  riscv_rv64 = 2
-};
+enum class elf_machine { unknown = 0, riscv_rv32 = 1, riscv_rv64 = 2 };
 
 struct elf_segment {
   uint64_t address;
@@ -41,26 +37,24 @@ struct elf_segment {
 };
 
 class ELFProgram {
-public:
+ public:
   ~ELFProgram();
 
   elf_machine get_machine() const;
 
-  bool read(MemoryDevice &src,
-            unit_id_t unit = make_unit(unit_kind::external));
-  bool load(MemoryDevice &dst,
-            unit_id_t unit = make_unit(unit_kind::external));
+  bool read(MemoryDevice &src, unit_id_t unit = make_unit(unit_kind::external));
+  bool load(MemoryDevice &dst, unit_id_t unit = make_unit(unit_kind::external));
   void clear();
 
-  const std::vector<elf_segment> & get_segments() const { return segments; }
-  const symbol_map & get_symbols() const { return symbols; }
+  const std::vector<elf_segment> &get_segments() const { return segments; }
+  const symbol_map &get_symbols() const { return symbols; }
   uint64_t get_entry_address() const { return entry_address; }
 
   reg_t find_symbol(const char *name) const;
 
   static constexpr uint64_t invalid_address = ~0ull;
 
-private:
+ private:
   bool read_header(MemoryDevice &src, unit_id_t unit);
   bool read_program_header(Elf64_Phdr &program_header, MemoryDevice &src,
                            unit_id_t unit, uint64_t offset);

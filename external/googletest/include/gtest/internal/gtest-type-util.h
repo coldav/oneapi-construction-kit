@@ -88,8 +88,8 @@ inline std::string CanonicalizeForStdLibVersioning(std::string s) {
 
 #if GTEST_HAS_RTTI
 // GetTypeName(const std::type_info&) returns a human-readable name of type T.
-inline std::string GetTypeName(const std::type_info& type) {
-  const char* const name = type.name();
+inline std::string GetTypeName(const std::type_info &type) {
+  const char *const name = type.name();
 #if GTEST_HAS_CXXABI_H_ || defined(__HP_aCC)
   int status = 0;
   // gcc's implementation of typeid(T).name() mangles the type name,
@@ -97,7 +97,7 @@ inline std::string GetTypeName(const std::type_info& type) {
 #if GTEST_HAS_CXXABI_H_
   using abi::__cxa_demangle;
 #endif  // GTEST_HAS_CXXABI_H_
-  char* const readable_name = __cxa_demangle(name, nullptr, nullptr, &status);
+  char *const readable_name = __cxa_demangle(name, nullptr, nullptr, &status);
   const std::string name_str(status == 0 ? readable_name : name);
   free(readable_name);
   return CanonicalizeForStdLibVersioning(name_str);

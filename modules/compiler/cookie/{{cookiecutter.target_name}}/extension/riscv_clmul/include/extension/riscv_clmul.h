@@ -13,22 +13,23 @@
 // under the License.
 //
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-{% if cookiecutter.copyright_name != "" -%}
+{
+  % if cookiecutter.copyright_name != "" - %
+}
 /// Additional changes Copyright (C) {{cookiecutter.copyright_name}}. All Rights
 /// Reserved.
-{% endif -%}
+{ % endif - % }
+#ifndef{{cookiecutter.target_name_capitals } } _RISCV_CLMUL_H_INCLUDED
+#define{{cookiecutter.target_name_capitals } } _RISCV_CLMUL_H_INCLUDED
 
-#ifndef {{cookiecutter.target_name_capitals}}_RISCV_CLMUL_H_INCLUDED
-#define {{cookiecutter.target_name_capitals}}_RISCV_CLMUL_H_INCLUDED
- 
- #include <extension/extension.h>
- 
- namespace extension {
- 
- class riscv_clmul final : public extension {
-  public:
-   riscv_clmul();
- };
- 
- }  // namespace extension
- #endif
+#include <extension/extension.h>
+
+namespace extension {
+
+class riscv_clmul final : public extension {
+ public:
+  riscv_clmul();
+};
+
+}  // namespace extension
+#endif

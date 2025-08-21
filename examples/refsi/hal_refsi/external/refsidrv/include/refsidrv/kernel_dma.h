@@ -20,28 +20,28 @@
 #include <map>
 #include <memory>
 
+#include "common_devices.h"
 #include "devices.h"
 #include "elf_loader.h"
-#include "common_devices.h"
 
 class DMADevice : public MemoryDeviceBase {
-public:
+ public:
   DMADevice(elf_machine machine, reg_t base_addr, MemoryInterface &mem_if,
             bool debug = false)
-     : machine(machine), base_addr(base_addr), mem_if(mem_if), debug(debug) {}
+      : machine(machine), base_addr(base_addr), mem_if(mem_if), debug(debug) {}
   virtual ~DMADevice();
 
   reg_t get_base() const { return base_addr; }
 
-  uint64_t* get_dma_regs(unit_id_t unit_id);
+  uint64_t *get_dma_regs(unit_id_t unit_id);
 
   size_t mem_size() const override;
 
-  bool load(reg_t addr, size_t len, uint8_t* bytes, unit_id_t unit_id) override;
-  bool store(reg_t addr, size_t len, const uint8_t* bytes,
+  bool load(reg_t addr, size_t len, uint8_t *bytes, unit_id_t unit_id) override;
+  bool store(reg_t addr, size_t len, const uint8_t *bytes,
              unit_id_t unit_id) override;
 
-private:
+ private:
   bool get_dma_reg(reg_t rel_addr, size_t &dma_reg) const;
   bool read_dma_reg(size_t dma_reg, uint64_t *val, unit_id_t unit_id);
   bool write_dma_reg(size_t dma_reg, uint64_t val, unit_id_t unit_id);
