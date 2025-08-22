@@ -1,68 +1,6 @@
-# Copyright (C) Codeplay Software Limited
-#
-# Licensed under the Apache License, Version 2.0 (the "License") with LLVM
-# Exceptions; you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     https://github.com/uxlfoundation/oneapi-construction-kit/blob/main/LICENSE.txt
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-# License for the specific language governing permissions and limitations
-# under the License.
-#
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-
-if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-  option(CA_VECZ_ONLY "Build Vecz only and not all of ComputeAorta" ON)
-  cmake_minimum_required(VERSION 3.20)
-
-  project(VECZ)
-endif()
-
-if(CA_VECZ_ONLY)
-  # LLVM_CMAKE_DIR should have "LLVM-Config.cmake".
-  if(NOT LLVM_CMAKE_DIR)
-    message(FATAL_ERROR "Please set up llvm cmake directory")
-  endif()
-
-  if(NOT EXISTS "${LLVM_CMAKE_DIR}/LLVM-Config.cmake")
-    message(FATAL_ERROR "LLVM-Config.cmake does not exist in ${LLVM_CMAKE_DIR}.")
-  endif()
-
-  list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_DIR}")
-
-  include(LLVMConfig)
-  include(AddLLVM)
-  include(HandleLLVMOptions)
-
-  add_definitions(${LLVM_DEFINITIONS})
-  link_directories("${LLVM_LIBRARY_DIRS}")
-endif()
-
 set(VECZ_PUBLIC_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(VECZ_PRIVATE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/source)
 set(VECZ_PRIVATE_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/source/include)
-
-# If the online coverage is enabled we add the modules so that the XML file
-# can be generated automatically.
-if(${CA_ENABLE_COVERAGE} AND ${CA_RUNTIME_COMPILER_ENABLED})
-  add_coverage_modules(${VECZ_PRIVATE_SOURCE_DIR}
-    ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/vecz.dir/source
-    ${VECZ_PRIVATE_SOURCE_DIR}/analysis
-    ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/vecz.dir/source/analysis
-    ${VECZ_PRIVATE_SOURCE_DIR}/transform
-    ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/vecz.dir/source/transform
-    ${VECZ_PUBLIC_INCLUDE_DIR}/vecz
-    ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/vecz.dir/source
-    ${VECZ_PRIVATE_INCLUDE_DIR}/analysis
-    ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/vecz.dir/source/analysis
-    ${VECZ_PRIVATE_INCLUDE_DIR}/transform
-    ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/vecz.dir/source/transform
-    ${VECZ_PRIVATE_INCLUDE_DIR}
-    ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/vecz.dir/source)
-endif()
 
 set(COMMON_SRCS
   ${VECZ_PUBLIC_INCLUDE_DIR}/vecz/pass.h
@@ -165,39 +103,32 @@ if(MSVC)
   list(APPEND VECZ_COMPILE_OPTIONS -wd4100)
 endif()
 
-if(CA_VECZ_ONLY)
-  if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-    add_llvm_loadable_module(vecz ${COMMON_SRCS})
-  else()
-    add_llvm_library(vecz ${COMMON_SRCS})
-  endif()
-else()
-  # We want a static library for linking with libOpenCL
-  add_ca_library(vecz STATIC ${MODULES_LIBRARY_TYPE} ${COMMON_SRCS})
+add_llvm_component_library(LLVMNativeCPUVecz
+  ${COMMON_SRCS}
+  LINK_COMPONENTS
+  NativeCPUPipeline
+  support
+  core
+  analysis
+  instcombine
+  aggressiveinstcombine
+  transformutils
+  scalaropts
+  ipo
+  passes
+  )
 
-  llvm_map_components_to_libnames(LLVM_LIBS
-    support core analysis instcombine aggressiveinstcombine transformutils scalaropts ipo passes)
-endif()
-
-target_include_directories(vecz
+target_include_directories(LLVMNativeCPUVecz
   PUBLIC $<BUILD_INTERFACE:${VECZ_PUBLIC_INCLUDE_DIR}>
-  PRIVATE $<BUILD_INTERFACE:${VECZ_PRIVATE_INCLUDE_DIR}>)
-target_compile_options(vecz PRIVATE ${VECZ_COMPILE_OPTIONS})
-target_compile_definitions(vecz PRIVATE
+  PRIVATE $<BUILD_INTERFACE:${VECZ_PRIVATE_INCLUDE_DIR}>
+)
+target_compile_options(LLVMNativeCPUVecz PRIVATE ${VECZ_COMPILE_OPTIONS})
+target_compile_definitions(LLVMNativeCPUVecz PRIVATE
   ${VECZ_COMPILE_DEFINITIONS})
 
-target_link_libraries(vecz PRIVATE compiler-pipeline multi_llvm PUBLIC ${LLVM_LIBS})
-
-# intrinsics_gen uses tablegen to generate Attributes.inc, which is
-# (recursively) included by 'llvm/IR/Module.h', therefore this module depends
-# on that target.
-if(TARGET intrinsics_gen)
-  add_dependencies(vecz intrinsics_gen)
-endif()
-
-if(NOT CA_VECZ_ONLY)
+# Currently disabled by default, these allow us to run lit tests using veczc
+set(BUILD_VECZ_TEST_TOOLS OFF CACHE BOOL "Build vecz test and tools" FORCE)
+if (BUILD_VECZ_TEST_TOOLS)
   add_subdirectory(tools)
-  if(CA_ENABLE_TESTS)
-    add_subdirectory(test)
-  endif()
+  add_subdirectory(test)
 endif()
